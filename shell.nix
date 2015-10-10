@@ -1,4 +1,4 @@
-{ nixpkgs ? import <nixpkgs> {}, compiler ? "ghc7101" }: let
+{ nixpkgs ? import <nixpkgs> {}, compiler ? "ghc7102" }: let
   inherit (nixpkgs) pkgs;
   ghc = pkgs.haskell.packages.${compiler}.ghcWithPackages( ps: with ps; [
     cabal2nix doctest hasktags hspec-discover stylish-haskell
