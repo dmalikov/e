@@ -1,5 +1,5 @@
 { mkDerivation, base, base64-bytestring, bytestring, cipher-aes
-, crypto-cipher-types, directory, DRBG, filepath, hspec
+, crypto-cipher-types, directory, DRBG, either, filepath, hspec
 , optparse-applicative, process, random, RSA, stdenv, text
 , unordered-containers
 }:
@@ -9,12 +9,14 @@ mkDerivation {
   src = ./.;
   isLibrary = true;
   isExecutable = true;
-  buildDepends = [
+  libraryHaskellDepends = [
     base base64-bytestring bytestring cipher-aes crypto-cipher-types
-    directory DRBG filepath optparse-applicative random RSA text
-    unordered-containers
+    directory DRBG either filepath random RSA text unordered-containers
   ];
-  testDepends = [
+  executableHaskellDepends = [
+    base bytestring optparse-applicative text
+  ];
+  testHaskellDepends = [
     base base64-bytestring bytestring cipher-aes crypto-cipher-types
     directory DRBG filepath hspec process random RSA text
   ];

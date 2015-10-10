@@ -30,6 +30,7 @@ Library
                       , bytestring
                       , cipher-aes
                       , crypto-cipher-types
+                      , either
                       , filepath
                       , directory
                       , DRBG
