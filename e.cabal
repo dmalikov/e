@@ -1,0 +1,86 @@
+Name:                   e
+Version:                0.0.0
+Author:                 Dmitry Malikov <malikov.d.y@gmail.com>
+Maintainer:             Dmitry Malikov <malikov.d.y@gmail.com>
+License:                MIT
+License-File:           LICENSE
+Synopsis:               Text encrypting using RSA and AES-GCM
+Description:            Text encrypting using RSA and AES-GCM
+Category:               Cryptography, System
+Cabal-Version:          >= 1.10
+Build-Type:             Simple
+Extra-Source-Files:     README.md
+                      , ChangeLog.md
+Data-Files:             test/data/encrypted
+                      , test/data/plain
+                      , test/data/keys/idtest.private
+                      , test/data/keys/idtest.public
+
+Library
+  Default-Language:     Haskell2010
+  HS-Source-Dirs:       src
+  GHC-Options:          -Wall
+  Exposed-Modules:      Control.E.Keys
+                      , Data.ByteString.Encrypt
+                      , Data.Text.Encrypt.Template
+                      , Data.Text.Encrypt.Template.IO
+  Other-Modules:        Control.E.Keys.Internal
+  Build-Depends:        base >= 4 && < 5
+                      , base64-bytestring
+                      , bytestring
+                      , cipher-aes
+                      , crypto-cipher-types
+                      , filepath
+                      , directory
+                      , DRBG
+                      , random
+                      , RSA
+                      , text
+                      , unordered-containers
+
+Test-Suite spec
+  Type:                 exitcode-stdio-1.0
+  Default-Language:     Haskell2010
+  Hs-Source-Dirs:       test/spec
+  Ghc-Options:          -Wall
+  Main-Is:              Spec.hs
+  Build-Depends:        base >= 4 && < 5
+                      , base64-bytestring
+                      , bytestring
+                      , cipher-aes
+                      , crypto-cipher-types
+                      , directory
+                      , DRBG
+                      , e
+                      , filepath
+                      , hspec
+                      , random
+                      , RSA
+                      , text
+
+Test-Suite functional
+  Type:                 exitcode-stdio-1.0
+  Default-Language:     Haskell2010
+  Hs-Source-Dirs:       test/functional
+  Ghc-Options:          -Wall
+  Main-Is:              Main.hs
+  Build-Depends:        base >= 4 && < 5
+                      , directory
+                      , e
+                      , filepath
+                      , process
+                      , random
+
+Executable e
+  Main-is:              E.hs
+  Hs-Source-Dirs:       exe
+  Default-Language:     Haskell2010
+  Build-Depends:        base >= 4 && < 5
+                      , bytestring
+                      , e
+                      , optparse-applicative
+                      , text
+
+Source-Repository head
+  Type:                 git
+  Location:             https://github.com/dmalikov/e

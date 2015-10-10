@@ -1,0 +1,3 @@
+machine ftp.freebsd.org
+    login edwin
+    password p4ssw0rd
