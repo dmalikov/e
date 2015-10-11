@@ -10,17 +10,17 @@ import           Options.Applicative
 
 
 main :: IO ()
-main = do
+main =
   getCommand >>= \case
     Encrypt keyId plainString ->
-      lookupPublic keyId >>= \case
+      getStorePath >>= lookupPublic keyId >>= \case
         Nothing        -> error ("key <" ++ keyId ++ "> not found")
         Just publicKey ->
           BSE.encrypt publicKey (T.pack plainString) >>= \case
             Left err  -> error (show err)
             Right enc -> putStrLn (BSE.showEnc enc)
     Decrypt keyId encryptedString ->
-      lookupPrivate keyId >>= \case
+      getStorePath >>= lookupPrivate keyId >>= \case
         Nothing         -> error ("key <" ++ keyId ++ "> not found")
         Just privateKey ->
           case BSE.readEnc encryptedString of

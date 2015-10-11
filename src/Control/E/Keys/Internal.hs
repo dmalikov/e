@@ -12,8 +12,8 @@ import           System.FilePath       (takeFileName, (</>))
 import           System.Random
 
 -- | 'FilePath' of a key store.
--- Return a value of $E_KEYS_STORE environment variable if defined.
--- Return a ~/.encrypt-keys otherwise.
+-- Return a value of @$E_KEYS_STORE@ environment variable if defined.
+-- Return @~/.encrypt-keys@ otherwise.
 --
 -- Note: this method isn't supposed to create such directory if it doesn't exist.
 getStorePath :: IO FilePath
@@ -22,20 +22,24 @@ getStorePath =
     Just path -> return path
     Nothing   -> (</> ".encrypt-keys") `fmap` getHomeDirectory
 
--- | Lookup private key from key store. TODO: pass store here.
-lookupPrivate :: String -> IO (Maybe RSA.PrivateKey)
-lookupPrivate keyId =
-  ((</> keyId ++ ".private") <$> getStorePath) >>= \filename ->
+-- | Lookup private key from key store.
+lookupPrivate :: String   -- ^ Key id.
+              -> FilePath -- ^ Key store 'FilePath'.
+              -> IO (Maybe RSA.PrivateKey)
+lookupPrivate keyId store = let filename = store </> keyId ++ ".private"
+  in
     doesFileExist filename >>= \case
-      True -> Just . read <$> readFile filename
+      True  -> Just . read <$> readFile filename
       False -> return Nothing
 
--- | Lookup public key from key store. TODO: pass store here.
-lookupPublic :: String -> IO (Maybe RSA.PublicKey)
-lookupPublic keyId = do
-  ((</> keyId ++ ".public") <$> getStorePath) >>= \filename ->
+-- | Lookup public key from key store.
+lookupPublic :: String   -- ^ Key id.
+             -> FilePath -- ^ Key store 'FilePath'.
+             -> IO (Maybe RSA.PublicKey)
+lookupPublic keyId store = let filename = store </> keyId ++ ".public"
+  in
     doesFileExist filename >>= \case
-      True -> Just . read <$> readFile filename
+      True  -> Just . read <$> readFile filename
       False -> return Nothing
 
 -- | Any possible state of a given key's presence.
@@ -99,8 +103,8 @@ list = do
   toString bool = if bool then "+" else "-"
 
 -- | Generate keypair with a given keyId.
--- If keyId wasn't defined, random string would be chosen as an id.
-generate :: Maybe String -> IO ()
+generate :: Maybe String -- ^ If it is 'Nothing' keyId will be chosen randomly.
+         -> IO ()
 generate maybeKeyId = do
   case maybeKeyId of
     Just keyId -> generate' keyId

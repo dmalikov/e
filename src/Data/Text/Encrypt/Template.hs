@@ -4,7 +4,7 @@
 -- | 'Text' templating mechanism with a power of 'Data.ByteString.Encrypt'.
 module Data.Text.Encrypt.Template where
 
-import           Control.E.Keys          (lookupPrivate, lookupPublic)
+import           Control.E.Keys
 import qualified Data.ByteString.Encrypt as E
 import qualified Data.Text.Encoding      as TE
 import qualified Data.Text.Lazy          as TL
@@ -59,8 +59,8 @@ encrypt = loopEncrypt TL.empty
     let (keyId, value) = TL.breakOn "|" input
     if (not ("|" `TL.isPrefixOf` value))
       then return (Left MissingPlainText)
-      else do
-        lookupPublic (TL.unpack keyId) >>= \case
+      else
+        getStorePath >>= lookupPublic (TL.unpack keyId) >>= \case
           Nothing        -> return (Left PublicKeyNotFound)
           Just publicKey ->
             E.encrypt publicKey (TL.toStrict (TL.drop 1 value)) >>= \case
@@ -103,7 +103,7 @@ decrypt = loopDecrypt TL.empty
   parseAndDecrypt input =
     case TL.splitOn "|" input of
       keyId : encryptedKeys : ciphered : [] ->
-        lookupPrivate (TL.unpack keyId) >>= \case
+        getStorePath >>= lookupPrivate (TL.unpack keyId) >>= \case
           Nothing         -> return (Left PrivateKeyNotFound)
           Just privateKey ->
             E.decrypt privateKey (E.Encrypted (TE.encodeUtf8 (TL.toStrict encryptedKeys)) (TL.toStrict ciphered)) >>= \case
