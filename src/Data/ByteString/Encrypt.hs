@@ -43,7 +43,7 @@ instance Show e => Show (Encrypted e) where
 instance Functor Encrypted where
   fmap f (Encrypted k c) = Encrypted k (f c)
 
-deriving instance Eq RSA.RSAError -- TODO: get rid of it
+deriving instance Eq RSA.RSAError -- TODO: remove when it's merged https://github.com/GaloisInc/RSA/pull/13
 
 -- | Encryption error.
 data EncryptError
