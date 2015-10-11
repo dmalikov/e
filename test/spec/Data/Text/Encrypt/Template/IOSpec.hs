@@ -16,10 +16,10 @@ spec :: Spec
 spec = do
   describe "encrypt templating files" $ do
     it "decrypts encrypted file" $ do
-      encryptedFilePath <- getDataFileName "test/data/encrypted"
-      plainFilePath     <- getDataFileName "test/data/plain"
+      encryptedFilePath <- getDataFileName "test/data/.netrc.encrypted"
+      plainFilePath     <- getDataFileName "test/data/.netrc"
       let testDataFilePath = takeDirectory encryptedFilePath
-      let decryptedFilePath = testDataFilePath </> "decrypted"
+      let decryptedFilePath = testDataFilePath </> ".netrc.decrypted"
       setEnv "E_KEYS_STORE" (testDataFilePath </> "keys")
       TETIO.decrypt encryptedFilePath decryptedFilePath `shouldReturn` Nothing
       expected <- TLIO.readFile plainFilePath

@@ -1,7 +1,7 @@
 {-# LANGUAGE LambdaCase          #-}
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
--- | 'Text' templating mechanism with a power of 'Data.ByteString.Encrypt'.
+-- | 'Text' templating mechanism with a power of 'Data.ByteString.Encrypt'
 module Data.Text.Encrypt.Template where
 
 import           Control.E.Keys
@@ -12,7 +12,6 @@ import qualified Data.Text.Lazy          as TL
 -- | Templating error occurred during encryption.
 data EncryptTemplateError
   = EncryptSyntaxError SyntaxError -- ^ Malformed syntax.
-  | MissingPlainText               -- ^ Plain text part is missed . TODO: why it's not a 'SyntaxError'?
   | PublicKeyNotFound              -- ^ Given public key doesn't exist in key store.
   | EncryptError E.EncryptError    -- ^ Internal 'E.EncryptError'.
     deriving (Eq, Show)
@@ -26,13 +25,17 @@ data DecryptTemplateError
 
 -- | Syntax error.
 data SyntaxError
-  = MissingClosingParens -- ^ Closing parens is missed. TODO: isn't it a 'brackes'?
+  = MissingClosingBraces -- ^ Closing braces is missed.
+  | MissingPlainText     -- ^ Plain text part is missed.
   | InvalidFormat        -- ^ Invalid format.
     deriving (Eq, Show)
 
 -- | Encrypt given 'TL.Text'.
--- I.e.
---     encrypt "This is {{id01|nice}}!" -> "This is {{id01|<some hash>|<some hash>}}!"
+--
+-- @
+--     > encrypt "This is {{id01|nice}}!"
+--     "This is {{id01|\<some hash\>|\<some hash\>}}!"
+-- @
 encrypt :: TL.Text -> IO (Either EncryptTemplateError TL.Text)
 encrypt = loopEncrypt TL.empty
  where
@@ -46,7 +49,7 @@ encrypt = loopEncrypt TL.empty
       else do
         let (toEncrypt, restRest) = TL.breakOn "}}" (TL.drop 2 rest)
         if (not ("}}" `TL.isPrefixOf` restRest))
-          then return (Left (EncryptSyntaxError MissingClosingParens))
+          then return (Left (EncryptSyntaxError MissingClosingBraces))
           else do
             parseAndEncrypt toEncrypt >>= \case
               Left e          -> return (Left e)
@@ -58,7 +61,7 @@ encrypt = loopEncrypt TL.empty
   parseAndEncrypt input = do
     let (keyId, value) = TL.breakOn "|" input
     if (not ("|" `TL.isPrefixOf` value))
-      then return (Left MissingPlainText)
+      then return (Left (EncryptSyntaxError MissingPlainText))
       else
         getStorePath >>= lookupPublic (TL.unpack keyId) >>= \case
           Nothing        -> return (Left PublicKeyNotFound)
@@ -77,8 +80,11 @@ encrypt = loopEncrypt TL.empty
                   ]
 
 -- | Decrypt given 'TL.Text'.
--- I.e.
---     decrypt "This is {{id01|<some hash>|<some hash>}}!" -> "This is nice!"
+--
+-- @
+--     > decrypt "This is {{id01|\<some hash\>|\<some hash\>}}!"
+--     "This is nice!"
+-- @
 decrypt :: TL.Text -> IO (Either DecryptTemplateError TL.Text)
 decrypt = loopDecrypt TL.empty
  where
@@ -90,7 +96,7 @@ decrypt = loopDecrypt TL.empty
       else do
         let (toDecrypt, restRest) = TL.breakOn "}}" (TL.drop 2 rest)
         if (not ("}}" `TL.isPrefixOf` restRest))
-          then return (Left (DecryptSyntaxError MissingClosingParens))
+          then return (Left (DecryptSyntaxError MissingClosingBraces))
           else
             parseAndDecrypt toDecrypt >>= \case
               Left e          -> return (Left e)

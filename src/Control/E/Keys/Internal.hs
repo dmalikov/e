@@ -1,12 +1,12 @@
 {-# LANGUAGE LambdaCase #-}
--- | Key management.
+-- | Key management
 module Control.E.Keys.Internal where
 
 import qualified Codec.Crypto.RSA.Pure as RSA
 import           Control.Monad         (when)
 import           Crypto.Random.DRBG    (CtrDRBG, newGenIO)
 import qualified Data.HashMap.Strict   as H
-import           System.Directory      (createDirectory, doesDirectoryExist, doesFileExist, getDirectoryContents, getHomeDirectory)
+import           System.Directory      (createDirectory, doesDirectoryExist, doesFileExist, getDirectoryContents, getHomeDirectory, removeFile)
 import           System.Environment    (lookupEnv)
 import           System.FilePath       (takeFileName, (</>))
 import           System.Random
@@ -50,7 +50,7 @@ data KeyPresence
   | None    -- ^ Neither private nor public keys exist.
     deriving (Eq, Show)
 
--- | Unfortunately, 'KeyPresence' is a 'Monoid'.
+-- | ಥ_ಥ.
 instance Monoid KeyPresence where
   mempty = None
 
@@ -74,9 +74,9 @@ hasPrivate Private = True
 hasPrivate Both    = True
 hasPrivate _       = False
 
--- | Read 'H.HashMap String KeyPresence' from a given store.
--- This is a mapping from a given keyId to a 'KeyPresence'.
-readStore :: FilePath -> IO (H.HashMap String KeyPresence)
+-- | Read keys from a given store.
+readStore :: FilePath                          -- ^ Key store 'FilePath'.
+          -> IO (H.HashMap String KeyPresence) -- ^ Mapping from a given keyId to 'KeyPresence'
 readStore s = foldl addKey H.empty <$> filter (\x -> x /= "." || x /= "..") <$> getDirectoryContents s
  where
   addKey oldStore file = let
@@ -129,5 +129,21 @@ generate maybeKeyId = do
       True  -> onExists
       False -> writeFile filename content
 
-  randomStr :: Int -> IO String
-  randomStr n = take n . randomRs ('a','z') <$> newStdGen
+-- | Remove keypair with a given keyId from key store.
+removeKey :: String -> IO ()
+removeKey keyId = do
+  putStrLn ("Removing key <" ++ keyId ++ ">")
+  privateKeyFile <- (</> keyId ++ ".private") <$> getStorePath
+  publicKeyFile  <- (</> keyId ++ ".public")  <$> getStorePath
+  whenM (doesFileExist privateKeyFile) (removeFile privateKeyFile)
+  whenM (doesFileExist publicKeyFile)  (removeFile publicKeyFile)
+ where
+  whenM :: IO Bool -> IO () -> IO ()
+  whenM monadBool action = do
+    bool' <- monadBool
+    when bool' action
+
+-- | Generate random string.
+randomStr :: Int -- ^ Length of generated string.
+          -> IO String
+randomStr n = take n . randomRs ('a','z') <$> newStdGen

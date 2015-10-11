@@ -1,4 +1,4 @@
--- | Key management.
+-- | Key management
 module Control.E.Keys
   ( list
   , lookupPrivate

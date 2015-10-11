@@ -5,12 +5,13 @@
 {-# LANGUAGE OverloadedStrings         #-}
 {-# LANGUAGE ScopedTypeVariables       #-}
 {-# LANGUAGE StandaloneDeriving        #-}
--- | ByteString encryption routines.
+-- | ByteString encryption routines
 module Data.ByteString.Encrypt
   ( Encryptable(..)
   , Encrypted(..)
   , EncryptError(..)
   , DecryptError(..)
+  , AESError(..)
   ) where
 
 import qualified Codec.Crypto.RSA.Pure      as RSA
@@ -30,8 +31,8 @@ import           Data.Text.Encoding         (decodeUtf8, encodeUtf8)
 
 -- | Encrypted value.
 data Encrypted e = Encrypted
-  { _encryptedKeys :: BS.ByteString -- ^ AES-GCM input values (key, iv and tag) RSA-encrypted using given public key
-  , _ciphered      :: e             -- ^ AES-GCM-encrypted value
+  { _encryptedKeys :: BS.ByteString -- ^ AES-GCM input values (key, iv and tag) RSA-encrypted using given public key.
+  , _ciphered      :: e             -- ^ AES-GCM-encrypted value.
   }
 
 instance Eq e => Eq (Encrypted e) where
@@ -62,7 +63,7 @@ data DecryptError
 
 -- | AES error.
 data AESError
-  = TagMismatch -- ^ Authentication tag mismatch
+  = TagMismatch -- ^ Authentication tag mismatch.
     deriving (Eq, Show)
 
 -- | Unified interface for encryption routines.

@@ -11,8 +11,8 @@ Cabal-Version:          >= 1.10
 Build-Type:             Simple
 Extra-Source-Files:     README.md
                       , ChangeLog.md
-Data-Files:             test/data/encrypted
-                      , test/data/plain
+Data-Files:             test/data/.netrc.encrypted
+                      , test/data/.netrc
                       , test/data/keys/idtest.private
                       , test/data/keys/idtest.public
 
@@ -21,10 +21,11 @@ Library
   HS-Source-Dirs:       src
   GHC-Options:          -Wall
   Exposed-Modules:      Control.E.Keys
+                      , Control.E.Keys.Internal
                       , Data.ByteString.Encrypt
                       , Data.Text.Encrypt.Template
                       , Data.Text.Encrypt.Template.IO
-  Other-Modules:        Control.E.Keys.Internal
+  Other-Modules:
   Build-Depends:        base >= 4 && < 5
                       , base64-bytestring
                       , bytestring

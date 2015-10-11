@@ -34,7 +34,7 @@ spec = do
 
     context "of texts" $ do
       it "works with cyrillic letters"  $ test ("тест" :: Text) 1024
-      it "works with unicode"           $ test ("y̆̆̆̆̆̆̆̆̆̆̆̆̆̆̆̆̆̆😘⛪"  :: Text) 1024
+      it "works with unicode"           $ test ("y̆̆̆̆̆̆̆̆̆̆̆̆̆̆̆̆̆̆😘⛪" :: Text) 1024
       it "works with long strings"      $ test (T.pack (concat (take 10000 (repeat "very long string! " )))) 1024
 
   where

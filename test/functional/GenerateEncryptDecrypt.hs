@@ -4,13 +4,12 @@ module GenerateEncryptDecrypt
   ( generateEncryptDecrypt
   ) where
 
-import           Control.E.Keys   (getStorePath)
-import           Control.Monad    (when)
-import           System.Directory (doesFileExist, getCurrentDirectory, removeFile)
-import           System.Exit      (ExitCode (..))
-import           System.FilePath  ((</>))
-import           System.Process   (readProcessWithExitCode)
-import           System.Random
+import           Control.E.Keys.Internal (randomStr, removeKey)
+import           Control.Monad           (when)
+import           System.Directory        (doesFileExist, getCurrentDirectory)
+import           System.Exit             (ExitCode (..))
+import           System.FilePath         ((</>))
+import           System.Process          (readProcessWithExitCode)
 
 
 generateEncryptDecrypt :: IO ()
@@ -61,19 +60,3 @@ getExe = do
   doesFileExist filepath >>= \case
     True  -> return filepath
     False -> error ("unable to find e executable")
-
-removeKey :: String -> IO ()
-removeKey keyId = do
-  putStrLn ("Removing key <" ++ keyId ++ ">")
-  privateKeyFile <- (</> keyId ++ ".private") <$> getStorePath
-  publicKeyFile  <- (</> keyId ++ ".public")  <$> getStorePath
-  whenM (doesFileExist privateKeyFile) (removeFile privateKeyFile)
-  whenM (doesFileExist publicKeyFile)  (removeFile publicKeyFile)
- where
-  whenM :: IO Bool -> IO () -> IO ()
-  whenM monadBool action = do
-    bool' <- monadBool
-    when bool' action
-
-randomStr :: Int -> IO String
-randomStr n = take n . randomRs ('a','z') <$> newStdGen
