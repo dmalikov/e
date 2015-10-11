@@ -48,16 +48,21 @@ deriving instance Eq RSA.RSAError -- TODO: remove when it's merged https://githu
 -- | Encryption error.
 data EncryptError
   = EncryptRSAError RSA.RSAError -- ^ 'RSA.RSAError'.
-  | EncryptGenError GenError     -- ^ Something happen during random bytes generation.
+  | EncryptGenError GenError     -- ^ Error in random bytes generation.
   | EncryptKeySizeError          -- ^ Size of public key is unappropriately small (less than a 64 bytes).
     deriving (Eq, Show)
 
 -- | Decryption error.
 data DecryptError
   = DecryptRSAError RSA.RSAError -- ^ 'RSA.RSAError'.
-  | DecryptGenError GenError     -- ^ Something happen during random bytes generation.
-  | DecryptAESError              -- ^ Decrypted tag doesn't match the original one. TODO: well, name it properly than.
+  | DecryptGenError GenError     -- ^ Error in random bytes generation.
+  | DecryptAESError AESError     -- ^ Error in AES decryption.
   | DecryptBase64Error String    -- ^ Encoded keys is not a valid base64 encoded data.
+    deriving (Eq, Show)
+
+-- | AES error.
+data AESError
+  = TagMismatch -- ^ Authentication tag mismatch
     deriving (Eq, Show)
 
 -- | Unified interface for encryption routines.
@@ -106,7 +111,7 @@ decryptBase privateKey (Encrypted { _encryptedKeys = encryptedEncodedKeys, _ciph
     (key, iv, tag) <- bimapEitherT DecryptRSAError    id (hoistEither (decryptKeys encryptedKeys))
     let (plain, tagDecrypted) = AES.decryptGCM (AES.initAES key) iv "" ciphered
     when (AuthTag tag /= tagDecrypted) $
-      left DecryptAESError
+      left (DecryptAESError TagMismatch)
     return plain
 
   where
