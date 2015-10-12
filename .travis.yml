@@ -1,0 +1,11 @@
+sudo: required
+
+before_install:
+    - |
+      bash <(curl -sS https://nixos.org/nix/install)
+      source $HOME/.nix-profile/etc/profile.d/nix.sh
+
+install:
+    - nix-shell --run 'cabal build && cabal test'
+
+script: true
