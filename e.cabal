@@ -36,7 +36,7 @@ Library
                       , directory
                       , DRBG
                       , random
-                      , RSA
+                      , RSA >= 2.2.0
                       , text
                       , unordered-containers
 
@@ -57,7 +57,7 @@ Test-Suite spec
                       , filepath
                       , hspec
                       , random
-                      , RSA
+                      , RSA >= 2.2.0
                       , text
 
 Test-Suite functional
