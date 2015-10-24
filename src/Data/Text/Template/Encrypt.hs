@@ -2,7 +2,7 @@
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 -- | 'Text' templating mechanism with a power of 'Data.ByteString.Encrypt'
-module Data.Text.Encrypt.Template where
+module Data.Text.Template.Encrypt where
 
 import           Control.E.Keys
 import qualified Data.ByteString.Encrypt as E

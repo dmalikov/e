@@ -7,8 +7,8 @@ module Data.Text.Encrypt.TemplateSpec
 
 import           Control.E.Keys
 import           Control.E.Keys.Internal    (randomStr, removeKey)
-import           Data.Text.Encrypt.Template (DecryptTemplateError (..), EncryptTemplateError (..), SyntaxError (..), decrypt, encrypt)
 import qualified Data.Text.Lazy             as TL
+import           Data.Text.Template.Encrypt (DecryptTemplateError (..), EncryptTemplateError (..), SyntaxError (..), decrypt, encrypt)
 import           Test.Hspec
 
 main :: IO ()

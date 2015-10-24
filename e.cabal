@@ -18,13 +18,13 @@ Data-Files:             test/data/.netrc.encrypted
 
 Library
   Default-Language:     Haskell2010
+  GHC-Options:          -O2 -Wall
   HS-Source-Dirs:       src
-  GHC-Options:          -Wall
   Exposed-Modules:      Control.E.Keys
                       , Control.E.Keys.Internal
                       , Data.ByteString.Encrypt
-                      , Data.Text.Encrypt.Template
-                      , Data.Text.Encrypt.Template.IO
+                      , Data.Text.Template.Encrypt
+                      , System.Template.Encrypt
   Other-Modules:
   Build-Depends:        base >= 4 && < 5
                       , base64-bytestring
@@ -43,8 +43,8 @@ Library
 Test-Suite spec
   Type:                 exitcode-stdio-1.0
   Default-Language:     Haskell2010
+  Ghc-Options:          -O2 -Wall
   Hs-Source-Dirs:       test/spec
-  Ghc-Options:          -Wall
   Main-Is:              Spec.hs
   Build-Depends:        base >= 4 && < 5
                       , base64-bytestring
@@ -63,8 +63,8 @@ Test-Suite spec
 Test-Suite functional
   Type:                 exitcode-stdio-1.0
   Default-Language:     Haskell2010
+  Ghc-Options:          -O2 -Wall
   Hs-Source-Dirs:       test/functional
-  Ghc-Options:          -Wall
   Main-Is:              Main.hs
   Build-Depends:        base >= 4 && < 5
                       , directory
@@ -75,8 +75,9 @@ Test-Suite functional
 
 Executable e
   Main-is:              E.hs
-  Hs-Source-Dirs:       exe
   Default-Language:     Haskell2010
+  Ghc-Options:          -O2 -Wall
+  Hs-Source-Dirs:       exe
   Build-Depends:        base >= 4 && < 5
                       , bytestring
                       , e

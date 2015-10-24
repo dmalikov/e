@@ -2,11 +2,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 import           Control.E.Keys
-import qualified Data.ByteString.Encrypt       as BSE
-import qualified Data.Text                     as T
-import qualified Data.Text.Encrypt.Template.IO as TETIO
-import qualified Data.Text.IO                  as TIO (putStrLn)
+import qualified Data.ByteString.Encrypt as BSE
+import qualified Data.Text               as T
+import qualified Data.Text.IO            as TIO (putStrLn)
 import           Options.Applicative
+import qualified System.Template.Encrypt as STE
 
 
 main :: IO ()
@@ -30,11 +30,11 @@ main =
                 Left err        -> error (show err)
                 Right decrypted -> TIO.putStrLn decrypted
     EncryptFile fpsrc fpdst ->
-      TETIO.encrypt fpsrc fpdst >>= \case
+      STE.encrypt fpsrc fpdst >>= \case
         Nothing -> return ()
         Just e  -> error (show e)
     DecryptFile fpsrc fpdst ->
-      TETIO.decrypt fpsrc fpdst >>= \case
+      STE.decrypt fpsrc fpdst >>= \case
         Nothing -> return ()
         Just e  -> error (show e)
     GenerateKey maybeKeyId -> generate maybeKeyId
