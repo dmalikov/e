@@ -12,7 +12,6 @@ import qualified Data.Text.Lazy.IO          as TLIO
 import qualified Data.Text.Template.Encrypt as Template
 import           System.Directory           (doesDirectoryExist, doesFileExist)
 import           System.FilePath.Posix      (takeDirectory)
-import           System.IO                  (IOMode (..), hClose, openFile)
 
 
 -- | Templating error occurred during encryption.
@@ -37,26 +36,16 @@ data FSError
 encrypt :: FilePath -- ^ Input file.
         -> FilePath -- ^ Output file.
         -> IO (Maybe EncryptSystemError)
-encrypt input output = do
+encrypt input output =
   doesFileExist input >>= \case
     False -> return (Just (EncryptFSError InputFileNotFound))
-    True  -> do
+    True  ->
       doesDirectoryExist (takeDirectory input) >>= \case
         False -> return (Just (EncryptFSError OutputDirectoryNotFound))
-        True  -> do
-          handleIn  <- openFile input ReadMode
-          handleOut <- openFile output WriteMode
-          inputContent <- TLIO.hGetContents handleIn
-          eitherEncrypted <- Template.encrypt inputContent
-          hClose handleIn
-          case eitherEncrypted of
-            Left e          -> do
-              hClose handleOut
-              return (Just (EncryptTemplateError e))
-            Right encrypted -> do
-              TLIO.hPutStr handleOut encrypted
-              hClose handleOut
-              return Nothing
+        True  ->
+          TLIO.readFile input >>= Template.encrypt >>= \case
+            Left e          -> return (Just (EncryptTemplateError e))
+            Right encrypted -> TLIO.writeFile output encrypted >> return Nothing
 
 -- | For a given template update all the encrypted-text holes with decrypted values and produce a file in a given filepath.
 decrypt :: FilePath -- ^ Input file.
@@ -69,16 +58,8 @@ decrypt input output = do
       doesDirectoryExist (takeDirectory input) >>= \case
         False -> return (Just (DecryptFSError OutputDirectoryNotFound))
         True  -> do
-          handleIn  <- openFile input ReadMode
-          handleOut <- openFile output WriteMode
-          inputContent <- TLIO.hGetContents handleIn
+          inputContent <- TLIO.readFile input
           eitherDecrypted <- Template.decrypt inputContent
-          hClose handleIn
           case eitherDecrypted of
-            Left e          -> do
-              hClose handleOut
-              return (Just (DecryptTemplateError e))
-            Right decrypted -> do
-              TLIO.hPutStr handleOut decrypted
-              hClose handleOut
-              return Nothing
+            Left e          -> return (Just (DecryptTemplateError e))
+            Right decrypted -> TLIO.writeFile output decrypted >> return Nothing
