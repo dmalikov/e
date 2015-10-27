@@ -38,6 +38,7 @@ Library
                       , random
                       , RSA >= 2.2.0
                       , text
+                      , transformers
                       , unordered-containers
 
 Test-Suite spec

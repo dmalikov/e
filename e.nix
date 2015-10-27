@@ -1,7 +1,7 @@
 { mkDerivation, base, base64-bytestring, bytestring, cipher-aes
 , crypto-cipher-types, directory, DRBG, either, filepath, hspec
 , optparse-applicative, process, random, RSA, stdenv, text
-, unordered-containers
+, transformers, unordered-containers
 }:
 mkDerivation {
   pname = "e";
@@ -11,7 +11,8 @@ mkDerivation {
   isExecutable = true;
   libraryHaskellDepends = [
     base base64-bytestring bytestring cipher-aes crypto-cipher-types
-    directory DRBG either filepath random RSA text unordered-containers
+    directory DRBG either filepath random RSA text transformers
+    unordered-containers
   ];
   executableHaskellDepends = [
     base bytestring optparse-applicative text

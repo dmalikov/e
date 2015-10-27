@@ -8,6 +8,9 @@ module System.Template.Encrypt
   , FSError(..)
   ) where
 
+import           Control.Monad              (unless)
+import           Control.Monad.IO.Class
+import           Control.Monad.Trans.Except
 import qualified Data.Text.Lazy.IO          as TLIO
 import qualified Data.Text.Template.Encrypt as Template
 import           System.Directory           (doesDirectoryExist, doesFileExist)
@@ -37,29 +40,26 @@ encrypt :: FilePath -- ^ Input file.
         -> FilePath -- ^ Output file.
         -> IO (Maybe EncryptSystemError)
 encrypt input output =
-  doesFileExist input >>= \case
-    False -> return (Just (EncryptFSError InputFileNotFound))
-    True  ->
-      doesDirectoryExist (takeDirectory input) >>= \case
-        False -> return (Just (EncryptFSError OutputDirectoryNotFound))
-        True  ->
-          TLIO.readFile input >>= Template.encrypt >>= \case
-            Left e          -> return (Just (EncryptTemplateError e))
-            Right encrypted -> TLIO.writeFile output encrypted >> return Nothing
+  fmap (either Just (const Nothing)) . runExceptT $ do
+    liftIO (doesFileExist input) >>=
+      throwUnless (EncryptFSError InputFileNotFound)
+    liftIO (doesDirectoryExist (takeDirectory input)) >>=
+      throwUnless (EncryptFSError OutputDirectoryNotFound)
+    liftIO (TLIO.readFile input >>= Template.encrypt) >>=
+      either (throwE . EncryptTemplateError) (liftIO . TLIO.writeFile output)
 
 -- | For a given template update all the encrypted-text holes with decrypted values and produce a file in a given filepath.
 decrypt :: FilePath -- ^ Input file.
         -> FilePath -- ^ Output file.
         -> IO (Maybe DecryptSystemError)
 decrypt input output = do
-  doesFileExist input >>= \case
-    False -> return (Just (DecryptFSError InputFileNotFound))
-    True  -> do
-      doesDirectoryExist (takeDirectory input) >>= \case
-        False -> return (Just (DecryptFSError OutputDirectoryNotFound))
-        True  -> do
-          inputContent <- TLIO.readFile input
-          eitherDecrypted <- Template.decrypt inputContent
-          case eitherDecrypted of
-            Left e          -> return (Just (DecryptTemplateError e))
-            Right decrypted -> TLIO.writeFile output decrypted >> return Nothing
+  fmap (either Just (const Nothing)) . runExceptT $ do
+    liftIO (doesFileExist input) >>=
+      throwUnless (DecryptFSError InputFileNotFound)
+    liftIO (doesDirectoryExist (takeDirectory input)) >>=
+      throwUnless (DecryptFSError OutputDirectoryNotFound)
+    liftIO (TLIO.readFile input >>= Template.decrypt) >>=
+      either (throwE . DecryptTemplateError) (liftIO . TLIO.writeFile output)
+
+throwUnless :: Monad m => e -> Bool -> ExceptT e m ()
+throwUnless = flip unless . throwE
