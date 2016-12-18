@@ -9,8 +9,8 @@ Description:            Text encrypting using RSA and AES-GCM
 Category:               Cryptography, System
 Cabal-Version:          >= 1.10
 Build-Type:             Simple
-Extra-Source-Files:     README.md
-                      , ChangeLog.md
+Extra-Source-Files:     README.markdown
+                      , ChangeLog.markdown
 Data-Files:             test/data/.netrc.encrypted
                       , test/data/.netrc
                       , test/data/keys/idtest.private
