@@ -6,10 +6,11 @@ module GenerateEncryptDecrypt
 
 import           Control.E.Keys.Internal (randomStr, removeKey)
 import           Control.Monad           (when)
-import           System.Directory        (doesFileExist, getCurrentDirectory)
+import           System.Directory        (doesFileExist)
 import           System.Exit             (ExitCode (..))
 import           System.FilePath         ((</>))
 import           System.Process          (readProcessWithExitCode)
+import           Paths_e
 
 
 generateEncryptDecrypt :: IO ()
@@ -33,7 +34,7 @@ generate keyId = do
 
 encrypt :: String -> String -> IO String
 encrypt keyId value = do
-  putStrLn ("Encrypting <" ++ value ++ ">")
+  putStrLn ("Encrypting <" ++ (shadow value) ++ ">")
   getExe >>= \exe ->
     readProcessWithExitCode exe ["encrypt", keyId, value] "" >>= \(exitCode, stdout, stderr) -> do
       when (exitCode /= ExitSuccess) $
@@ -44,7 +45,7 @@ encrypt keyId value = do
 
 decrypt :: String -> String -> IO String
 decrypt keyId value = do
-  putStrLn ("Decrypting <" ++ value ++ ">")
+  putStrLn ("Decrypting <" ++ (shadow value) ++ ">")
   getExe >>= \exe ->
     readProcessWithExitCode exe ["decrypt", keyId, value] "" >>= \(exitCode, stdout, stderr) -> do
       when (exitCode /= ExitSuccess) $
@@ -55,8 +56,10 @@ decrypt keyId value = do
 
 getExe :: IO FilePath
 getExe = do
-  pwd <- getCurrentDirectory
-  let filepath = pwd </> "dist" </> "build" </> "e" </> "e"
+  filepath <- (</> "e") <$> getBinDir
   doesFileExist filepath >>= \case
     True  -> return filepath
     False -> error ("unable to find e executable")
+
+shadow :: String -> String
+shadow s = take 7 s ++ "...[" ++ (show $ length s) ++ " chars long]"
