@@ -47,6 +47,9 @@ Test-Suite spec
   Ghc-Options:          -O2 -Wall
   Hs-Source-Dirs:       test/spec
   Main-Is:              Spec.hs
+  Other-Modules:        Data.ByteString.EncryptSpec
+                      , Data.Text.Encrypt.Template.IOSpec
+                      , Data.Text.Encrypt.TemplateSpec
   Build-Depends:        base >= 4 && < 5
                       , base64-bytestring
                       , bytestring
@@ -68,6 +71,7 @@ Test-Suite functional
   Hs-Source-Dirs:       test/functional
   Main-Is:              Main.hs
   Other-Modules:        Paths_e
+                      , GenerateEncryptDecrypt
   Build-Depends:        base >= 4 && < 5
                       , directory
                       , e

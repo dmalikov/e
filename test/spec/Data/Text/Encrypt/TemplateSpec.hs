@@ -36,37 +36,29 @@ spec = do
     context "encrypt / decrypt" $ do
       it "encrypts and decrypts text with a single hole" $ do
         keyId <- randomStr 10
-        putStrLn ("Generating key <" ++ keyId ++ ">")
         generate (Just keyId)
         original <- randomStr 30
         let value = "{{" ++ keyId ++ "|" ++ original ++ "}}"
-        putStrLn ("encrypt templating <" ++ value ++ ">")
         encrypt (TL.pack value) >>= \case
           Left e          -> error ("template enryption failed: " ++ show e)
           Right encrypted -> do
-            putStrLn ("decrypt templating <" ++ (TL.unpack encrypted) ++ ">")
             decrypt encrypted >>= \case
               Left e                         -> error ("template decryption failed: " ++ show e)
               Right (TL.unpack -> decrypted) -> do
-                putStrLn ("decrypted <" ++ decrypted ++ ">")
                 decrypted `shouldBe` original
         removeKey keyId
       it "encrypts and decrypts text with number of holes" $ do
         keyId <- randomStr 10
-        putStrLn ("Generating key <" ++ keyId ++ ">")
         generate (Just keyId)
         original1 <- randomStr 30
         original2 <- randomStr 30
         let value = "some text \n and more {{" ++ keyId ++ "|" ++ original1 ++ "}} more {{" ++
                     keyId ++ "|" ++ original2 ++ "}} well that's enough"
-        putStrLn ("encrypt templating <" ++ value ++ ">")
         encrypt (TL.pack value) >>= \case
           Left e          -> error ("template enryption failed: " ++ show e)
           Right encrypted -> do
-            putStrLn ("decrypt templating <" ++ (TL.unpack encrypted) ++ ">")
             decrypt encrypted >>= \case
               Left e                         -> error ("template decryption failed: " ++ show e)
               Right (TL.unpack -> decrypted) -> do
-                putStrLn ("decrypted <" ++ decrypted ++ ">")
                 decrypted `shouldBe` "some text \n and more " ++ original1 ++ " more " ++ original2 ++ " well that's enough"
         removeKey keyId

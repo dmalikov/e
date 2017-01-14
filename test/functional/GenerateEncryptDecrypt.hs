@@ -6,11 +6,11 @@ module GenerateEncryptDecrypt
 
 import           Control.E.Keys.Internal (randomStr, removeKey)
 import           Control.Monad           (when)
+import           Paths_e
 import           System.Directory        (doesFileExist)
 import           System.Exit             (ExitCode (..))
 import           System.FilePath         ((</>))
 import           System.Process          (readProcessWithExitCode)
-import           Paths_e
 
 
 generateEncryptDecrypt :: IO ()
@@ -26,15 +26,13 @@ generateEncryptDecrypt = do
 
 generate :: String -> IO ()
 generate keyId = do
-  putStrLn ("Generating key <" ++ keyId ++ ">")
   getExe >>= \exe ->
     readProcessWithExitCode exe ["generate-key", keyId] "" >>= \(exitCode, _, stderr) ->
       when (exitCode /= ExitSuccess) $
         error ("generate-key failed: " ++ stderr)
 
 encrypt :: String -> String -> IO String
-encrypt keyId value = do
-  putStrLn ("Encrypting <" ++ (shadow value) ++ ">")
+encrypt keyId value =
   getExe >>= \exe ->
     readProcessWithExitCode exe ["encrypt", keyId, value] "" >>= \(exitCode, stdout, stderr) -> do
       when (exitCode /= ExitSuccess) $
@@ -44,8 +42,7 @@ encrypt keyId value = do
         encrypted:_ -> return encrypted
 
 decrypt :: String -> String -> IO String
-decrypt keyId value = do
-  putStrLn ("Decrypting <" ++ (shadow value) ++ ">")
+decrypt keyId value =
   getExe >>= \exe ->
     readProcessWithExitCode exe ["decrypt", keyId, value] "" >>= \(exitCode, stdout, stderr) -> do
       when (exitCode /= ExitSuccess) $
@@ -60,6 +57,3 @@ getExe = do
   doesFileExist filepath >>= \case
     True  -> return filepath
     False -> error ("unable to find e executable")
-
-shadow :: String -> String
-shadow s = take 7 s ++ "...[" ++ (show $ length s) ++ " chars long]"

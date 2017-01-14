@@ -33,27 +33,22 @@ spec = do
       it "works with 4096 bits key"     $ testBS 75   4096
 
     context "of texts" $ do
-      it "works with cyrillic letters"  $ test ("тест" :: Text) 1024
-      it "works with unicode"           $ test ("y̆̆̆̆̆̆̆̆̆̆̆̆̆̆̆̆̆̆😘⛪" :: Text) 1024
-      it "works with long strings"      $ test (T.pack (concat (take 10000 (repeat "very long string! " )))) 1024
+      it "works with cyrillic letters"  $ test 1024 ("тест" :: Text)
+      it "works with unicode"           $ test 1024 ("y̆̆̆̆̆̆̆̆̆̆̆̆̆̆̆̆̆̆😘⛪" :: Text)
+      it "works with long strings"      $ test 1024 (T.pack (concat (take 10000 (repeat "very long string! " ))))
 
   where
 
     testBS :: Int -> Int -> IO ()
-    testBS plainSize keySize = do
-      original <- generateBytes plainSize
-      test original keySize
+    testBS plainSize keySize = test keySize =<< generateBytes plainSize
 
-    test :: Encryptable e => e -> Int -> IO ()
-    test original keySize = do
+    test :: Encryptable e => Int -> e -> IO ()
+    test keySize original = do
       gen <- newGenIO :: IO CtrDRBG
       let Right (publicKey, privateKey, _) = RSA.generateKeyPair gen keySize
       Right encrypted <- encrypt publicKey original
       Right decrypted <- decrypt privateKey encrypted
       decrypted `shouldBe` original
-      putStrLn ("original value:  " ++ show original)
-      putStrLn ("encrypted value: " ++ showEnc encrypted)
-      putStrLn ("decrypted value: " ++ show decrypted)
 
 generateBytes :: Int -> IO BS.ByteString
 generateBytes n = do
