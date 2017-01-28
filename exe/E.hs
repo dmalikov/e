@@ -1,7 +1,9 @@
-{-# LANGUAGE LambdaCase        #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE LambdaCase          #-}
+{-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 import           Control.E.Keys
+import           Crypto.Random.DRBG
 import qualified Data.ByteString.Encrypt as BSE
 import qualified Data.Text               as T
 import qualified Data.Text.IO            as TIO (putStrLn)
@@ -15,10 +17,11 @@ main =
     Encrypt keyId plainString ->
       getStorePath >>= lookupPublic keyId >>= \case
         Nothing        -> error ("key <" ++ keyId ++ "> not found")
-        Just publicKey ->
-          BSE.encrypt publicKey (T.pack plainString) >>= \case
-            Left err  -> error (show err)
-            Right enc -> putStrLn (BSE.showEnc enc)
+        Just publicKey -> do
+          g :: CtrDRBG <- newGenIO
+          case BSE.encrypt publicKey (T.pack plainString) g of
+            Left err       -> error (show err)
+            Right (enc, _) -> putStrLn (BSE.showEnc enc)
     Decrypt keyId encryptedString ->
       getStorePath >>= lookupPrivate keyId >>= \case
         Nothing         -> error ("key <" ++ keyId ++ "> not found")
@@ -26,7 +29,7 @@ main =
           case BSE.readEnc encryptedString of
             Nothing        -> error ("invalid format of encrypted value <" ++ encryptedString ++ ">")
             Just encrypted ->
-              BSE.decrypt privateKey encrypted >>= \case
+              case BSE.decrypt privateKey encrypted of
                 Left err        -> error (show err)
                 Right decrypted -> TIO.putStrLn decrypted
     EncryptFile fpsrc fpdst ->

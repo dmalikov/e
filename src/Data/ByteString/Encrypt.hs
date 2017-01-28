@@ -13,20 +13,22 @@ module Data.ByteString.Encrypt
   , AESError(..)
   ) where
 
-import qualified Codec.Crypto.RSA.Pure      as RSA
-import           Control.Arrow              ((***))
-import           Control.Monad              (join, when)
-import           Control.Monad.Trans.Either (EitherT (..), bimapEitherT, hoistEither, left, runEitherT)
-import qualified Crypto.Cipher.AES          as AES
-import           Crypto.Cipher.Types        (AuthTag (..))
-import           Crypto.Random.DRBG         (CtrDRBG, GenError, genBytes, newGenIO)
-import qualified Data.ByteString            as BS
-import qualified Data.ByteString.Base64     as Base64
-import qualified Data.ByteString.Internal   as BSI (c2w, w2c)
-import qualified Data.ByteString.Lazy       as BSL
-import           Data.Text                  (Text)
-import qualified Data.Text                  as T (pack)
-import           Data.Text.Encoding         (decodeUtf8, encodeUtf8)
+import qualified Codec.Crypto.RSA.Pure     as RSA
+import           Control.Applicative       (liftA2)
+import           Control.Arrow             (first, left, (***))
+import           Control.Monad             (join)
+import           Control.Monad.Morph       (hoist)
+import           Control.Monad.Trans.State
+import qualified Crypto.Cipher.AES         as AES
+import           Crypto.Cipher.Types       (AuthTag (..))
+import           Crypto.Random.DRBG        (CryptoRandomGen, GenError, genBytes)
+import qualified Data.ByteString           as BS
+import qualified Data.ByteString.Base64    as Base64
+import qualified Data.ByteString.Internal  as BSI (c2w, w2c)
+import qualified Data.ByteString.Lazy      as BSL
+import           Data.Text                 (Text)
+import qualified Data.Text                 as T (pack)
+import           Data.Text.Encoding        (decodeUtf8, encodeUtf8)
 
 -- | Encrypted value.
 data Encrypted e = Encrypted
@@ -67,10 +69,10 @@ data AESError
 class (Eq e, Show e) => Encryptable e where
 
   -- | Encrypt using given 'RSA.PublicKey'.
-  encrypt :: RSA.PublicKey -> e -> IO (Either EncryptError (Encrypted e))
+  encrypt :: CryptoRandomGen g => RSA.PublicKey -> e -> g -> Either EncryptError (Encrypted e, g)
 
   -- | Decrypt using given 'RSA.PrivateKey'.
-  decrypt :: RSA.PrivateKey -> Encrypted e -> IO (Either DecryptError e)
+  decrypt :: RSA.PrivateKey -> Encrypted e -> Either DecryptError e
 
   -- | Convert encrypted value to 'String'.
   showEnc :: Encrypted e -> String
@@ -78,48 +80,6 @@ class (Eq e, Show e) => Encryptable e where
   -- | Read encrypted value from 'String'.
   readEnc :: String -> Maybe (Encrypted e)
 
-encryptBase :: RSA.PublicKey -> BS.ByteString -> IO (Either EncryptError (Encrypted BS.ByteString))
-encryptBase publicKey plain = runEitherT $ do
-  when (RSA.public_size publicKey < 64) $
-    left EncryptKeySizeError
-  key           <- bimapEitherT EncryptGenError id (EitherT generateBytes)
-  iv            <- bimapEitherT EncryptGenError id (EitherT generateBytes)
-  let (ciphered, AuthTag tag) = AES.encryptGCM (AES.initAES key) iv "" plain
-  encryptedKeys <- bimapEitherT EncryptRSAError id (EitherT (encryptKeys key iv tag))
-  return (Encrypted (Base64.encode encryptedKeys) (Base64.encode ciphered))
-
- where
-
-   generateBytes :: IO (Either GenError BS.ByteString)
-   generateBytes = do
-     gen :: CtrDRBG <- newGenIO
-     return (fst <$> genBytes 16 gen)
-
-   encryptKeys :: BS.ByteString -> BS.ByteString -> BS.ByteString -> IO (Either RSA.RSAError BS.ByteString)
-   encryptKeys key iv tag = do
-     gen :: CtrDRBG <- newGenIO
-     return (BSL.toStrict . fst <$> RSA.encrypt gen publicKey (BSL.fromChunks [key `BS.append` iv `BS.append` tag]))
-
-
-decryptBase :: RSA.PrivateKey -> Encrypted BS.ByteString -> IO (Either DecryptError BS.ByteString)
-decryptBase privateKey (Encrypted { _encryptedKeys = encryptedEncodedKeys, _ciphered = encodedCiphered}) =
-  runEitherT $ do
-    encryptedKeys  <- bimapEitherT DecryptBase64Error id (hoistEither (Base64.decode encryptedEncodedKeys))
-    ciphered       <- bimapEitherT DecryptBase64Error id (hoistEither (Base64.decode encodedCiphered))
-    (key, iv, tag) <- bimapEitherT DecryptRSAError    id (hoistEither (decryptKeys encryptedKeys))
-    let (plain, tagDecrypted) = AES.decryptGCM (AES.initAES key) iv "" ciphered
-    when (AuthTag tag /= tagDecrypted) $
-      left (DecryptAESError TagMismatch)
-    return plain
-
-  where
-
-    decryptKeys :: BS.ByteString -> Either RSA.RSAError (BS.ByteString, BS.ByteString, BS.ByteString)
-    decryptKeys value = do
-      keys <- RSA.decrypt privateKey (BSL.fromChunks [value])
-      let (key, ivAndTag) = join (***) BSL.toStrict (BSL.splitAt 16 keys)
-      let (iv, tag) = BS.splitAt 16 ivAndTag
-      return (key, iv, tag)
 
 instance Encryptable BS.ByteString where
   encrypt = encryptBase
@@ -134,9 +94,9 @@ instance Encryptable BS.ByteString where
       (ek, c) -> Just (Encrypted (BS.pack (map BSI.c2w ek)) (BS.pack (map BSI.c2w (tail c))))
 
 instance Encryptable Text where
-  encrypt key plain = (fmap . fmap . fmap) decodeUtf8 (encryptBase key (encodeUtf8 plain))
+  encrypt key plain g = first (fmap decodeUtf8) `fmap` (encryptBase key (encodeUtf8 plain) g)
 
-  decrypt privateKey encrypted = (fmap . fmap) decodeUtf8 (decryptBase privateKey (fmap encodeUtf8 encrypted))
+  decrypt privateKey encrypted = decodeUtf8 `fmap` (decryptBase privateKey (fmap encodeUtf8 encrypted))
 
   showEnc (Encrypted ek c) = BSI.w2c `fmap` BS.unpack (BS.concat [ek, ".", encodeUtf8 c])
 
@@ -145,3 +105,43 @@ instance Encryptable Text where
       ([], _) -> Nothing
       (_, []) -> Nothing
       (ek, c) -> Just (Encrypted (BS.pack (map BSI.c2w ek)) (T.pack (tail c)))
+
+encryptBase :: forall g . CryptoRandomGen g =>
+  RSA.PublicKey ->
+  BS.ByteString ->
+  g ->
+  Either EncryptError (Encrypted BS.ByteString, g)
+encryptBase publicKey plain = runStateT $ do
+  (key, iv) <- StateT initialKeys
+  let (ciphered, AuthTag tag) = AES.encryptGCM (AES.initAES key) iv "" plain
+  encryptedKeys <- (left EncryptRSAError) `hoist` StateT (encryptKeys key iv tag)
+  return (Encrypted (Base64.encode encryptedKeys) (Base64.encode ciphered))
+
+    where
+
+      initialKeys :: g -> Either EncryptError ((BS.ByteString, BS.ByteString), g)
+      initialKeys = runStateT (liftA2 (,) bytes bytes)
+        where bytes :: StateT g (Either EncryptError) BS.ByteString
+              bytes = (left EncryptGenError) `hoist` StateT (genBytes 16)
+
+      encryptKeys :: BS.ByteString -> BS.ByteString -> BS.ByteString -> g -> Either RSA.RSAError (BS.ByteString, g)
+      encryptKeys key iv tag g = first BSL.toStrict <$> RSA.encrypt g publicKey (BSL.fromChunks [key `BS.append` iv `BS.append` tag])
+
+decryptBase :: RSA.PrivateKey -> Encrypted BS.ByteString -> Either DecryptError BS.ByteString
+decryptBase privateKey (Encrypted { _encryptedKeys = encryptedEncodedKeys, _ciphered = encodedCiphered}) = do
+    encryptedKeys  <- left DecryptBase64Error $ Base64.decode encryptedEncodedKeys
+    ciphered       <- left DecryptBase64Error $ Base64.decode encodedCiphered
+    (key, iv, tag) <- left DecryptRSAError $ decryptKeys encryptedKeys
+    let (plain, tagDecrypted) = AES.decryptGCM (AES.initAES key) iv "" ciphered
+    case (AuthTag tag == tagDecrypted) of
+      True  -> return plain
+      False -> Left (DecryptAESError TagMismatch)
+
+  where
+
+    decryptKeys :: BS.ByteString -> Either RSA.RSAError (BS.ByteString, BS.ByteString, BS.ByteString)
+    decryptKeys value = do
+      keys <- RSA.decrypt privateKey (BSL.fromChunks [value])
+      let (key, ivAndTag) = join (***) BSL.toStrict (BSL.splitAt 16 keys)
+      let (iv, tag) = BS.splitAt 16 ivAndTag
+      return (key, iv, tag)

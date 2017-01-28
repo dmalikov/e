@@ -35,6 +35,8 @@ Library
                       , filepath
                       , directory
                       , DRBG
+                      , mmorph
+                      , mtl
                       , random
                       , RSA >= 2.2.0
                       , text
@@ -86,6 +88,7 @@ Executable e
   Hs-Source-Dirs:       exe
   Build-Depends:        base >= 4 && < 5
                       , bytestring
+                      , DRBG
                       , e
                       , optparse-applicative
                       , text

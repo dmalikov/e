@@ -3,7 +3,7 @@
 module Control.E.Keys.Internal where
 
 import qualified Codec.Crypto.RSA.Pure as RSA
-import           Control.Monad         (when)
+import           Control.Monad         (unless, when)
 import           Crypto.Random.DRBG    (CtrDRBG, newGenIO)
 import qualified Data.HashMap.Strict   as H
 import           System.Directory      (createDirectory, doesDirectoryExist, doesFileExist, getDirectoryContents, getHomeDirectory, removeFile)
@@ -77,7 +77,7 @@ hasPrivate _       = False
 -- | Read keys from a given store.
 readStore :: FilePath                          -- ^ Key store 'FilePath'.
           -> IO (H.HashMap String KeyPresence) -- ^ Mapping from a given keyId to 'KeyPresence'
-readStore s = foldl addKey H.empty <$> filter (\x -> x /= "." || x /= "..") <$> getDirectoryContents s
+readStore s = foldl addKey H.empty . filter (\x -> x /= "." || x /= "..") <$> getDirectoryContents s
  where
   addKey oldStore file = let
     parse filename =
@@ -94,40 +94,38 @@ list :: IO ()
 list = do
   s <- getStorePath
   doesDirectoryExist s >>= \exist ->
-    if (not exist)
+    if not exist
       then error (s ++ " does not exist")
       else readStore s >>= \s' -> mapM_ (uncurry showKeys) (H.toList s')
  where
-  showKeys keyId keyPresence = putStrLn (keyId ++ " [" ++ (toString (hasPrivate keyPresence)) ++ "private,"
-                                                       ++ (toString (hasPublic  keyPresence)) ++ "public]")
+  showKeys keyId keyPresence = putStrLn (keyId ++ " [" ++ toString (hasPrivate keyPresence) ++ "private,"
+                                                       ++ toString (hasPublic  keyPresence) ++ "public]")
   toString bool = if bool then "+" else "-"
 
 -- | Generate keypair with a given keyId.
 generate :: Maybe String -- ^ If it is 'Nothing' keyId will be chosen randomly.
          -> IO ()
-generate maybeKeyId = do
-  case maybeKeyId of
-    Just keyId -> generate' keyId
-    Nothing    -> generate' =<< randomStr 10
- where
-  generate' :: String -> IO ()
-  generate' keyId = do
-    gen <- newGenIO :: IO CtrDRBG
-    let Right (publicKey, privateKey, _) = RSA.generateKeyPair gen 4096
-    keyStore <- getStorePath
-    doesDirectoryExist keyStore >>= \exist -> when (not exist) (createDirectory keyStore)
-    let pubfp  = keyStore </> keyId ++ ".public"
-    let privfp = keyStore </> keyId ++ ".private"
-    writeFileIfNotExist pubfp (show publicKey) $ error (pubfp ++ " file already exists")
-    putStrLn ("public key saved to " ++ pubfp)
-    writeFileIfNotExist privfp (show privateKey) $ error (privfp ++ " file already exists")
-    putStrLn ("private key saved to " ++ privfp)
+generate (Just keyId) = generate' keyId
+generate  Nothing     = generate' =<< randomStr 10
 
-  writeFileIfNotExist :: FilePath -> String -> IO () -> IO ()
-  writeFileIfNotExist filename content onExists =
-    doesFileExist filename >>= \case
-      True  -> onExists
-      False -> writeFile filename content
+generate' :: String -> IO ()
+generate' keyId = do
+  gen <- newGenIO :: IO CtrDRBG
+  let Right (publicKey, privateKey, _) = RSA.generateKeyPair gen 4096
+  keyStore <- getStorePath
+  doesDirectoryExist keyStore >>= \exist -> unless exist (createDirectory keyStore)
+  let pubfp  = keyStore </> keyId ++ ".public"
+  let privfp = keyStore </> keyId ++ ".private"
+  writeFileIfNotExist pubfp (show publicKey) $ error (pubfp ++ " file already exists")
+  putStrLn ("public key saved to " ++ pubfp)
+  writeFileIfNotExist privfp (show privateKey) $ error (privfp ++ " file already exists")
+  putStrLn ("private key saved to " ++ privfp)
+
+writeFileIfNotExist :: FilePath -> String -> IO () -> IO ()
+writeFileIfNotExist filename content onExists =
+  doesFileExist filename >>= \case
+    True  -> onExists
+    False -> writeFile filename content
 
 -- | Remove keypair with a given keyId from key store.
 removeKey :: String -> IO ()

@@ -1,4 +1,5 @@
-{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE LambdaCase          #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 -- | 'FilePath' templating mechanism with a power of 'Data.Text.Template.Encrypt'.
 module System.Template.Encrypt
   ( encrypt
@@ -11,6 +12,7 @@ module System.Template.Encrypt
 import           Control.Monad              (unless)
 import           Control.Monad.IO.Class
 import           Control.Monad.Trans.Except
+import           Crypto.Random.DRBG
 import qualified Data.Text.Lazy.IO          as TLIO
 import qualified Data.Text.Template.Encrypt as Template
 import           System.Directory           (doesDirectoryExist, doesFileExist)
@@ -45,7 +47,8 @@ encrypt input output =
       throwUnless (EncryptFSError InputFileNotFound)
     liftIO (doesDirectoryExist (takeDirectory input)) >>=
       throwUnless (EncryptFSError OutputDirectoryNotFound)
-    liftIO (TLIO.readFile input >>= Template.encrypt) >>=
+    g :: CtrDRBG <- liftIO newGenIO
+    liftIO (TLIO.readFile input >>= fmap fst . flip Template.encrypt g) >>=
       either (throwE . EncryptTemplateError) (liftIO . TLIO.writeFile output)
 
 -- | For a given template update all the encrypted-text holes with decrypted values and produce a file in a given filepath.
