@@ -1,0 +1,35 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# OPTIONS_GHC -fno-warn-unused-imports #-}</span><span>
+</span><a name="line-2"></a><span class="hs-pragma">{-# LANGUAGE OverloadedStrings #-}</span><span>
+</span><a name="line-3"></a><span>
+</span><a name="line-4"></a><span class="hs-comment">{-| How to use @cryptonite@
+
+&gt; -- | Beware MUST BE 256bits as we use AES256
+&gt; import Data.ByteString (ByteString)
+&gt; import Crypto.Cipher.AES (AES256)
+&gt; import Crypto.Cipher.Types (BlockCipher(..), Cipher(..),nullIV)
+&gt; import Crypto.Error (CryptoFailable(..))
+&gt;
+&gt; secretKey :: ByteString
+&gt; secretKey = &quot;012-456-89A-CDE-012-456-89A-CDE-&quot;
+&gt;
+&gt; encrypt :: ByteString -&gt; ByteString -&gt; ByteString
+&gt; encrypt secret = ctrCombine ctx nullIV
+&gt;   where
+&gt;     ctx = cipherInitNoErr (cipherMakeKey (undefined :: AES256) secret)
+&gt;     cipherInitNoErr :: BlockCipher c =&gt; Key c -&gt; c
+&gt;     cipherInitNoErr (Key k) = case cipherInit k of
+&gt;       CryptoPassed a -&gt; a
+&gt;       CryptoFailed e -&gt; error (show e)
+&gt;     cipherMakeKey :: Cipher cipher =&gt; cipher -&gt; ByteString -&gt; Key cipher
+&gt;     cipherMakeKey _ = Key -- Yeah Lazyness!!!!!!
+&gt;
+&gt;
+&gt; decrypt :: ByteString -&gt; ByteString -&gt; ByteString
+&gt; decrypt = encrypt
+
+|-}</span><span>
+</span><a name="line-31"></a><span>
+</span><a name="line-32"></a><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Crypto</span><span class="hs-operator">.</span><span class="hs-identifier">Tutorial</span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><a name="line-33"></a><span>
+</span><a name="line-34"></a><span class="hs-keyword">import</span><span> </span><a href="Crypto.Cipher.Types.html"><span class="hs-identifier">Crypto</span><span class="hs-operator">.</span><span class="hs-identifier">Cipher</span><span class="hs-operator">.</span><span class="hs-identifier">Types</span></a><span>
+</span><a name="line-35"></a></pre></body></html>

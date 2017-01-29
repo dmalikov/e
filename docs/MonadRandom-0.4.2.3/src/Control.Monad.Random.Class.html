@@ -1,0 +1,51 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE MultiParamTypeClasses, UndecidableInstances, FunctionalDependencies #-}</span><span>
+</span><a name="line-2"></a><span>
+</span><a name="line-3"></a><span class="hs-comment">{- |
+Copyright    : 2006-2007 Cale Gibbard, Russell O'Connor, Dan Doel, Remi Turk, Eric Kidd.
+License      : OtherLicense
+Stability    : experimental
+Portability  : non-portable (multi-parameter type classes, undecidable instances)
+
+A type class for random number generation monads.  See
+&lt;http://www.haskell.org/haskellwiki/NewMonads/MonadRandom&gt; for the original
+version of this code.
+
+Instances of this type class include 'Control.Monad.Random.Rand' and
+monads created using 'Control.Monad.Random.RandT'.
+
+-}</span><span>
+</span><a name="line-17"></a><span>
+</span><a name="line-18"></a><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Control</span><span class="hs-operator">.</span><span class="hs-identifier">Monad</span><span class="hs-operator">.</span><span class="hs-identifier">Random</span><span class="hs-operator">.</span><span class="hs-identifier">Class</span><span> </span><span class="hs-special">(</span><span>
+</span><a name="line-19"></a><span>    </span><a href="Control.Monad.Random.Class.html#MonadRandom"><span class="hs-identifier hs-type">MonadRandom</span></a><span class="hs-special">,</span><span>
+</span><a name="line-20"></a><span>    </span><a href="Control.Monad.Random.Class.html#getRandom"><span class="hs-identifier hs-var">getRandom</span></a><span class="hs-special">,</span><span>
+</span><a name="line-21"></a><span>    </span><a href="Control.Monad.Random.Class.html#getRandomR"><span class="hs-identifier hs-var">getRandomR</span></a><span class="hs-special">,</span><span>
+</span><a name="line-22"></a><span>    </span><a href="Control.Monad.Random.Class.html#getRandoms"><span class="hs-identifier hs-var">getRandoms</span></a><span class="hs-special">,</span><span>
+</span><a name="line-23"></a><span>    </span><a href="Control.Monad.Random.Class.html#getRandomRs"><span class="hs-identifier hs-var">getRandomRs</span></a><span class="hs-special">,</span><span>
+</span><a name="line-24"></a><span>    </span><a href="Control.Monad.Random.Class.html#MonadSplit"><span class="hs-identifier hs-type">MonadSplit</span></a><span class="hs-special">,</span><span>
+</span><a name="line-25"></a><span>    </span><a href="Control.Monad.Random.Class.html#getSplit"><span class="hs-identifier hs-var">getSplit</span></a><span>
+</span><a name="line-26"></a><span>    </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><a name="line-27"></a><span>
+</span><a name="line-28"></a><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">System</span><span class="hs-operator">.</span><span class="hs-identifier">Random</span><span>
+</span><a name="line-29"></a><span>
+</span><a name="line-30"></a><span class="hs-comment">-- | An interface to random number generation monads.</span><span>
+</span><a name="line-31"></a><span class="hs-keyword">class</span><span> </span><span class="hs-special">(</span><span class="hs-identifier hs-type">Monad</span><span> </span><a href="#local-1627400847"><span class="hs-identifier hs-type">m</span></a><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><a name="MonadRandom"><a href="Control.Monad.Random.Class.html#MonadRandom"><span class="hs-identifier">MonadRandom</span></a></a><span> </span><a name="local-1627400847"><a href="#local-1627400847"><span class="hs-identifier">m</span></a></a><span> </span><span class="hs-keyword">where</span><span>
+</span><a name="line-32"></a><span>    </span><span class="hs-comment">-- | Return a randomly-selected value of type @a@.  See</span><span>
+</span><a name="line-33"></a><span>    </span><span class="hs-comment">-- 'System.Random.random' for details.</span><span>
+</span><a name="line-34"></a><span>    </span><span class="hs-identifier">getRandom</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="hs-identifier hs-type">Random</span><span> </span><a href="#local-1627400848"><span class="hs-identifier hs-type">a</span></a><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><a href="#local-1627400847"><span class="hs-identifier hs-type">m</span></a><span> </span><a href="#local-1627400848"><span class="hs-identifier hs-type">a</span></a><span>
+</span><a name="line-35"></a><span>    </span><span class="hs-comment">-- | Return an infinite stream of random values of type @a@.  See</span><span>
+</span><a name="line-36"></a><span>    </span><span class="hs-comment">-- 'System.Random.randoms' for details.</span><span>
+</span><a name="line-37"></a><span>    </span><span class="hs-identifier">getRandoms</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="hs-identifier hs-type">Random</span><span> </span><a href="#local-1627400849"><span class="hs-identifier hs-type">a</span></a><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><a href="#local-1627400847"><span class="hs-identifier hs-type">m</span></a><span> </span><span class="hs-special">[</span><a href="#local-1627400849"><span class="hs-identifier hs-type">a</span></a><span class="hs-special">]</span><span>
+</span><a name="line-38"></a><span>    </span><span class="hs-comment">-- | Return a randomly-selected value of type @a@ in the range</span><span>
+</span><a name="line-39"></a><span>    </span><span class="hs-comment">-- /[lo,hi]/.  See 'System.Random.randomR' for details.</span><span>
+</span><a name="line-40"></a><span>    </span><span class="hs-identifier">getRandomR</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="hs-identifier hs-type">Random</span><span> </span><a href="#local-1627400850"><span class="hs-identifier hs-type">a</span></a><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="hs-special">(</span><a href="#local-1627400850"><span class="hs-identifier hs-type">a</span></a><span class="hs-special">,</span><a href="#local-1627400850"><span class="hs-identifier hs-type">a</span></a><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><a href="#local-1627400847"><span class="hs-identifier hs-type">m</span></a><span> </span><a href="#local-1627400850"><span class="hs-identifier hs-type">a</span></a><span>
+</span><a name="line-41"></a><span>    </span><span class="hs-comment">-- | Return an infinite stream of randomly-selected value of type @a@</span><span>
+</span><a name="line-42"></a><span>    </span><span class="hs-comment">-- in the range /[lo,hi]/.  See 'System.Random.randomRs' for details.</span><span>
+</span><a name="line-43"></a><span>    </span><span class="hs-identifier">getRandomRs</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="hs-identifier hs-type">Random</span><span> </span><a href="#local-1627400851"><span class="hs-identifier hs-type">a</span></a><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="hs-special">(</span><a href="#local-1627400851"><span class="hs-identifier hs-type">a</span></a><span class="hs-special">,</span><a href="#local-1627400851"><span class="hs-identifier hs-type">a</span></a><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><a href="#local-1627400847"><span class="hs-identifier hs-type">m</span></a><span> </span><span class="hs-special">[</span><a href="#local-1627400851"><span class="hs-identifier hs-type">a</span></a><span class="hs-special">]</span><span>
+</span><a name="line-44"></a><span>
+</span><a name="line-45"></a><span class="hs-comment">-- | An interface to monads with splittable state (as most random number generation monads will have).</span><span>
+</span><a name="line-46"></a><span class="hs-comment">-- The intention is that the 'getSplit' action splits the state, returning one half of the result, and</span><span>
+</span><a name="line-47"></a><span class="hs-comment">-- setting the new state to the other.</span><span>
+</span><a name="line-48"></a><span class="hs-keyword">class</span><span> </span><span class="hs-special">(</span><span class="hs-identifier hs-type">Monad</span><span> </span><a href="#local-1627400846"><span class="hs-identifier hs-type">m</span></a><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><a name="MonadSplit"><a href="Control.Monad.Random.Class.html#MonadSplit"><span class="hs-identifier">MonadSplit</span></a></a><span> </span><a name="local-1627400845"><a href="#local-1627400845"><span class="hs-identifier">s</span></a></a><span> </span><a name="local-1627400846"><a href="#local-1627400846"><span class="hs-identifier">m</span></a></a><span> </span><span class="hs-glyph">|</span><span> </span><span class="hs-identifier">m</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">s</span><span> </span><span class="hs-keyword">where</span><span>
+</span><a name="line-49"></a><span>    </span><span class="hs-identifier">getSplit</span><span> </span><span class="hs-glyph">::</span><span> </span><a href="#local-1627400846"><span class="hs-identifier hs-type">m</span></a><span> </span><a href="#local-1627400845"><span class="hs-identifier hs-type">s</span></a><span>
+</span><a name="line-50"></a><span>
+</span><a name="line-51"></a></pre></body></html>

@@ -1,0 +1,184 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">-- |</span><span>
+</span><a name="line-2"></a><span class="hs-comment">-- Module      : Crypto.Cipher.Types.Modes</span><span>
+</span><a name="line-3"></a><span class="hs-comment">-- License     : BSD-style</span><span>
+</span><a name="line-4"></a><span class="hs-comment">-- Maintainer  : Vincent Hanquez &lt;vincent@snarc.org&gt;</span><span>
+</span><a name="line-5"></a><span class="hs-comment">-- Stability   : Stable</span><span>
+</span><a name="line-6"></a><span class="hs-comment">-- Portability : Excellent</span><span>
+</span><a name="line-7"></a><span class="hs-comment">--</span><span>
+</span><a name="line-8"></a><span class="hs-comment">-- block cipher modes immutable interfaces</span><span>
+</span><a name="line-9"></a><span class="hs-comment">--</span><span>
+</span><a name="line-10"></a><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Crypto</span><span class="hs-operator">.</span><span class="hs-identifier">Cipher</span><span class="hs-operator">.</span><span class="hs-identifier">Types</span><span class="hs-operator">.</span><span class="hs-identifier">OfIO</span><span>
+</span><a name="line-11"></a><span>    </span><span class="hs-special">(</span><span>
+</span><a name="line-12"></a><span>    </span><span class="hs-comment">-- * ECB</span><span>
+</span><a name="line-13"></a><span>      </span><a href="Crypto.Cipher.Types.OfIO.html#ecbEncryptOfIO"><span class="hs-identifier hs-var">ecbEncryptOfIO</span></a><span>
+</span><a name="line-14"></a><span>    </span><span class="hs-special">,</span><span> </span><a href="Crypto.Cipher.Types.OfIO.html#ecbDecryptOfIO"><span class="hs-identifier hs-var">ecbDecryptOfIO</span></a><span>
+</span><a name="line-15"></a><span class="hs-comment">{-
+    -- * CBC
+    , cbcEncryptOfIO
+    , cbcDecryptOfIO
+    -- * CFB
+    , cfbEncryptOfIO
+    , cfbDecryptOfIO
+    , cfb8EncryptOfIO
+    , cfb8DecryptOfIO
+    -- * CTR
+    , ctrCombineOfIO
+    -- * XTS
+    , xtsEncryptOfIO
+    , xtsDecryptOfIO
+-}</span><span>
+</span><a name="line-30"></a><span>    </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><a name="line-31"></a><span>
+</span><a name="line-32"></a><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">Data</span><span class="hs-operator">.</span><span class="hs-identifier">ByteString</span><span> </span><span class="hs-special">(</span><span class="hs-identifier hs-type">ByteString</span><span class="hs-special">)</span><span>
+</span><a name="line-33"></a><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-identifier">Data</span><span class="hs-operator">.</span><span class="hs-identifier">ByteString</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="hs-identifier">B</span><span>
+</span><a name="line-34"></a><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-identifier">Data</span><span class="hs-operator">.</span><span class="hs-identifier">ByteString</span><span class="hs-operator">.</span><span class="hs-identifier">Internal</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="hs-identifier">B</span><span>
+</span><a name="line-35"></a><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">Data</span><span class="hs-operator">.</span><span class="hs-identifier">Byteable</span><span>
+</span><a name="line-36"></a><span class="hs-comment">--import Crypto.Cipher.Types.Base</span><span>
+</span><a name="line-37"></a><span class="hs-keyword">import</span><span> </span><a href="Crypto.Cipher.Types.Block.html"><span class="hs-identifier">Crypto</span><span class="hs-operator">.</span><span class="hs-identifier">Cipher</span><span class="hs-operator">.</span><span class="hs-identifier">Types</span><span class="hs-operator">.</span><span class="hs-identifier">Block</span></a><span>
+</span><a name="line-38"></a><span class="hs-keyword">import</span><span> </span><a href="Crypto.Cipher.Types.BlockIO.html"><span class="hs-identifier">Crypto</span><span class="hs-operator">.</span><span class="hs-identifier">Cipher</span><span class="hs-operator">.</span><span class="hs-identifier">Types</span><span class="hs-operator">.</span><span class="hs-identifier">BlockIO</span></a><span>
+</span><a name="line-39"></a><span class="hs-comment">--import Foreign.Storable (poke)</span><span>
+</span><a name="line-40"></a><span class="hs-comment">--import Foreign.Ptr</span><span>
+</span><a name="line-41"></a><span>
+</span><a name="line-42"></a><span class="hs-identifier">isBlockSized</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><a href="Crypto.Cipher.Types.Block.html#BlockCipher"><span class="hs-identifier hs-type">BlockCipher</span></a><span> </span><a href="#local-1627415865"><span class="hs-identifier hs-type">cipher</span></a><span class="hs-special">,</span><span> </span><a href="Crypto.Cipher.Types.BlockIO.html#BlockCipherIO"><span class="hs-identifier hs-type">BlockCipherIO</span></a><span> </span><a href="#local-1627415865"><span class="hs-identifier hs-type">cipher</span></a><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><a href="#local-1627415865"><span class="hs-identifier hs-type">cipher</span></a><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier hs-type">Int</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier hs-type">Bool</span><span>
+</span><a name="line-43"></a><a name="isBlockSized"><a href="Crypto.Cipher.Types.OfIO.html#isBlockSized"><span class="hs-identifier">isBlockSized</span></a></a><span> </span><a name="local-1627415866"><a href="#local-1627415866"><span class="hs-identifier">cipher</span></a></a><span> </span><a name="local-1627415867"><a href="#local-1627415867"><span class="hs-identifier">bsLen</span></a></a><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><a href="#local-1627415867"><span class="hs-identifier hs-var">bsLen</span></a><span> </span><span class="hs-special">`</span><span class="hs-identifier hs-var">mod</span><span class="hs-special">`</span><span> </span><a href="Crypto.Cipher.Types.Block.html#blockSize"><span class="hs-identifier hs-var">blockSize</span></a><span> </span><a href="#local-1627415866"><span class="hs-identifier hs-var">cipher</span></a><span class="hs-special">)</span><span> </span><span class="hs-operator hs-var">==</span><span> </span><span class="hs-number">0</span><span>
+</span><a name="line-44"></a><span>
+</span><a name="line-45"></a><span class="hs-identifier">notBlockSized</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><a href="Crypto.Cipher.Types.Block.html#BlockCipher"><span class="hs-identifier hs-type">BlockCipher</span></a><span> </span><a href="#local-1627415863"><span class="hs-identifier hs-type">cipher</span></a><span class="hs-special">,</span><span> </span><a href="Crypto.Cipher.Types.BlockIO.html#BlockCipherIO"><span class="hs-identifier hs-type">BlockCipherIO</span></a><span> </span><a href="#local-1627415863"><span class="hs-identifier hs-type">cipher</span></a><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><a href="#local-1627415863"><span class="hs-identifier hs-type">cipher</span></a><span> </span><span class="hs-glyph">-&gt;</span><span> </span><a href="#local-1627415864"><span class="hs-identifier hs-type">a</span></a><span>
+</span><a name="line-46"></a><a name="notBlockSized"><a href="Crypto.Cipher.Types.OfIO.html#notBlockSized"><span class="hs-identifier">notBlockSized</span></a></a><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier hs-var">undefined</span><span>
+</span><a name="line-47"></a><span>
+</span><a name="line-48"></a><span class="hs-identifier">withDest</span><span> </span><span class="hs-glyph">::</span><span> </span><a href="Crypto.Cipher.Types.BlockIO.html#BlockCipherIO"><span class="hs-identifier hs-type">BlockCipherIO</span></a><span> </span><a href="#local-1627415862"><span class="hs-identifier hs-type">cipher</span></a><span>
+</span><a name="line-49"></a><span>         </span><span class="hs-glyph">=&gt;</span><span> </span><a href="#local-1627415862"><span class="hs-identifier hs-type">cipher</span></a><span>
+</span><a name="line-50"></a><span>         </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier hs-type">ByteString</span><span>
+</span><a name="line-51"></a><span>         </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><a href="Crypto.Cipher.Types.BlockIO.html#PtrDest"><span class="hs-identifier hs-type">PtrDest</span></a><span> </span><span class="hs-glyph">-&gt;</span><span> </span><a href="Crypto.Cipher.Types.BlockIO.html#PtrSource"><span class="hs-identifier hs-type">PtrSource</span></a><span> </span><span class="hs-glyph">-&gt;</span><span> </span><a href="Crypto.Cipher.Types.BlockIO.html#BufferLength"><span class="hs-identifier hs-type">BufferLength</span></a><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier hs-type">IO</span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><a name="line-52"></a><span>         </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier hs-type">ByteString</span><span>
+</span><a name="line-53"></a><a name="withDest"><a href="Crypto.Cipher.Types.OfIO.html#withDest"><span class="hs-identifier">withDest</span></a></a><span> </span><a name="local-1627415868"><a href="#local-1627415868"><span class="hs-identifier">cipher</span></a></a><span> </span><a name="local-1627415869"><a href="#local-1627415869"><span class="hs-identifier">bs</span></a></a><span> </span><a name="local-1627415870"><a href="#local-1627415870"><span class="hs-identifier">f</span></a></a><span>
+</span><a name="line-54"></a><span>    </span><span class="hs-glyph">|</span><span> </span><span class="hs-identifier hs-var">B</span><span class="hs-operator hs-var">.</span><span class="hs-identifier hs-var">null</span><span> </span><a href="#local-1627415869"><span class="hs-identifier hs-var">bs</span></a><span>                     </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier hs-var">B</span><span class="hs-operator hs-var">.</span><span class="hs-identifier hs-var">empty</span><span>
+</span><a name="line-55"></a><span>    </span><span class="hs-glyph">|</span><span> </span><span class="hs-identifier hs-var">not</span><span> </span><span class="hs-special">(</span><a href="Crypto.Cipher.Types.OfIO.html#isBlockSized"><span class="hs-identifier hs-var">isBlockSized</span></a><span> </span><a href="#local-1627415868"><span class="hs-identifier hs-var">cipher</span></a><span> </span><a href="#local-1627415871"><span class="hs-identifier hs-var">len</span></a><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><a href="Crypto.Cipher.Types.OfIO.html#notBlockSized"><span class="hs-identifier hs-var">notBlockSized</span></a><span> </span><a href="#local-1627415868"><span class="hs-identifier hs-var">cipher</span></a><span>
+</span><a name="line-56"></a><span>    </span><span class="hs-glyph">|</span><span> </span><span class="hs-identifier hs-var">otherwise</span><span>                     </span><span class="hs-glyph">=</span><span>
+</span><a name="line-57"></a><span>        </span><span class="hs-identifier hs-var">B</span><span class="hs-operator hs-var">.</span><span class="hs-identifier hs-var">unsafeCreate</span><span> </span><a href="#local-1627415871"><span class="hs-identifier hs-var">len</span></a><span> </span><span class="hs-operator hs-var">$</span><span> </span><span class="hs-glyph">\</span><a name="local-1627415872"><a href="#local-1627415872"><span class="hs-identifier">dst</span></a></a><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><a name="line-58"></a><span>        </span><span class="hs-identifier hs-var">withBytePtr</span><span> </span><a href="#local-1627415869"><span class="hs-identifier hs-var">bs</span></a><span>     </span><span class="hs-operator hs-var">$</span><span> </span><span class="hs-glyph">\</span><a name="local-1627415873"><a href="#local-1627415873"><span class="hs-identifier">src</span></a></a><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><a name="line-59"></a><span>        </span><a href="#local-1627415870"><span class="hs-identifier hs-var">f</span></a><span> </span><a href="#local-1627415872"><span class="hs-identifier hs-var">dst</span></a><span> </span><a href="#local-1627415873"><span class="hs-identifier hs-var">src</span></a><span> </span><span class="hs-special">(</span><span class="hs-identifier hs-var">fromIntegral</span><span> </span><a href="#local-1627415871"><span class="hs-identifier hs-var">len</span></a><span class="hs-special">)</span><span>
+</span><a name="line-60"></a><span>  </span><span class="hs-keyword">where</span><span> </span><a name="local-1627415871"><a href="#local-1627415871"><span class="hs-identifier">len</span></a></a><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier hs-var">B</span><span class="hs-operator hs-var">.</span><span class="hs-identifier hs-var">length</span><span> </span><a href="#local-1627415869"><span class="hs-identifier hs-var">bs</span></a><span>
+</span><a name="line-61"></a><span>
+</span><a name="line-62"></a><span class="hs-comment">{-
+withDestIV :: BlockCipherIO cipher
+           =&gt; cipher
+           -&gt; IV cipher
+           -&gt; ByteString
+           -&gt; (PtrIV -&gt; PtrDest -&gt; PtrSource -&gt; BufferLength -&gt; IO ())
+           -&gt; ByteString
+withDestIV cipher (IV iv) bs f
+    | B.null bs                     = B.empty
+    | not (isBlockSized cipher len) = notBlockSized cipher
+    | otherwise                     =
+        B.unsafeCreate len $ \dst   -&gt;
+        withBytePtr iv     $ \ivPtr -&gt;
+        withBytePtr bs     $ \src   -&gt;
+        f ivPtr dst src (fromIntegral len)
+  where len = B.length bs
+
+withDestIVAnySize :: BlockCipherIO cipher
+                  =&gt; IV cipher
+                  -&gt; ByteString
+                  -&gt; (PtrIV -&gt; PtrDest -&gt; PtrSource -&gt; BufferLength -&gt; IO ())
+                  -&gt; ByteString
+withDestIVAnySize (IV iv) bs f
+    | B.null bs = B.empty
+    | otherwise =
+        B.unsafeCreate len $ \dst   -&gt;
+        withBytePtr iv     $ \ivPtr -&gt;
+        withBytePtr bs     $ \src   -&gt;
+        f ivPtr dst src (fromIntegral len)
+  where len = B.length bs
+-}</span><span>
+</span><a name="line-93"></a><span>
+</span><a name="line-94"></a><span class="hs-comment">-- | Encrypt using the ECB mode.</span><span>
+</span><a name="line-95"></a><span class="hs-comment">--</span><span>
+</span><a name="line-96"></a><span class="hs-comment">-- input need to be a multiple of the blocksize</span><span>
+</span><a name="line-97"></a><span class="hs-identifier">ecbEncryptOfIO</span><span> </span><span class="hs-glyph">::</span><span> </span><a href="Crypto.Cipher.Types.BlockIO.html#BlockCipherIO"><span class="hs-identifier hs-type">BlockCipherIO</span></a><span> </span><a href="#local-1627415861"><span class="hs-identifier hs-type">cipher</span></a><span> </span><span class="hs-glyph">=&gt;</span><span> </span><a href="#local-1627415861"><span class="hs-identifier hs-type">cipher</span></a><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier hs-type">ByteString</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier hs-type">ByteString</span><span>
+</span><a name="line-98"></a><a name="ecbEncryptOfIO"><a href="Crypto.Cipher.Types.OfIO.html#ecbEncryptOfIO"><span class="hs-identifier">ecbEncryptOfIO</span></a></a><span> </span><a name="local-1627415874"><a href="#local-1627415874"><span class="hs-identifier">cipher</span></a></a><span> </span><a name="local-1627415875"><a href="#local-1627415875"><span class="hs-identifier">bs</span></a></a><span> </span><span class="hs-glyph">=</span><span> </span><a href="Crypto.Cipher.Types.OfIO.html#withDest"><span class="hs-identifier hs-var">withDest</span></a><span> </span><a href="#local-1627415874"><span class="hs-identifier hs-var">cipher</span></a><span> </span><a href="#local-1627415875"><span class="hs-identifier hs-var">bs</span></a><span> </span><span class="hs-operator hs-var">$</span><span> </span><a href="Crypto.Cipher.Types.BlockIO.html#ecbEncryptMutable"><span class="hs-identifier hs-var">ecbEncryptMutable</span></a><span> </span><a href="#local-1627415874"><span class="hs-identifier hs-var">cipher</span></a><span>
+</span><a name="line-99"></a><span>
+</span><a name="line-100"></a><span class="hs-comment">-- | Decrypt using the ECB mode.</span><span>
+</span><a name="line-101"></a><span class="hs-comment">--</span><span>
+</span><a name="line-102"></a><span class="hs-comment">-- input need to be a multiple of the blocksize</span><span>
+</span><a name="line-103"></a><span class="hs-identifier">ecbDecryptOfIO</span><span> </span><span class="hs-glyph">::</span><span> </span><a href="Crypto.Cipher.Types.BlockIO.html#BlockCipherIO"><span class="hs-identifier hs-type">BlockCipherIO</span></a><span> </span><a href="#local-1627415860"><span class="hs-identifier hs-type">cipher</span></a><span> </span><span class="hs-glyph">=&gt;</span><span> </span><a href="#local-1627415860"><span class="hs-identifier hs-type">cipher</span></a><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier hs-type">ByteString</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier hs-type">ByteString</span><span>
+</span><a name="line-104"></a><a name="ecbDecryptOfIO"><a href="Crypto.Cipher.Types.OfIO.html#ecbDecryptOfIO"><span class="hs-identifier">ecbDecryptOfIO</span></a></a><span> </span><a name="local-1627415876"><a href="#local-1627415876"><span class="hs-identifier">cipher</span></a></a><span> </span><a name="local-1627415877"><a href="#local-1627415877"><span class="hs-identifier">bs</span></a></a><span> </span><span class="hs-glyph">=</span><span> </span><a href="Crypto.Cipher.Types.OfIO.html#withDest"><span class="hs-identifier hs-var">withDest</span></a><span> </span><a href="#local-1627415876"><span class="hs-identifier hs-var">cipher</span></a><span> </span><a href="#local-1627415877"><span class="hs-identifier hs-var">bs</span></a><span> </span><span class="hs-operator hs-var">$</span><span> </span><a href="Crypto.Cipher.Types.BlockIO.html#ecbEncryptMutable"><span class="hs-identifier hs-var">ecbEncryptMutable</span></a><span> </span><a href="#local-1627415876"><span class="hs-identifier hs-var">cipher</span></a><span>
+</span><a name="line-105"></a><span>
+</span><a name="line-106"></a><span class="hs-comment">{-
+-- | encrypt using the CBC mode.
+--
+-- input need to be a multiple of the blocksize
+cbcEncryptOfIO :: BlockCipherIO cipher =&gt; cipher -&gt; IV cipher -&gt; ByteString -&gt; ByteString
+cbcEncryptOfIO cipher iv bs = withDestIV cipher iv bs $ cbcEncryptMutable cipher
+
+-- | decrypt using the CBC mode.
+--
+-- input need to be a multiple of the blocksize
+cbcDecryptOfIO :: BlockCipherIO cipher =&gt; cipher -&gt; IV cipher -&gt; ByteString -&gt; ByteString
+cbcDecryptOfIO cipher iv bs = withDestIV cipher iv bs $ cbcDecryptMutable cipher
+
+-- | encrypt using the CFB mode.
+--
+-- input need to be a multiple of the blocksize
+cfbEncryptOfIO :: BlockCipherIO cipher =&gt; cipher -&gt; IV cipher -&gt; ByteString -&gt; ByteString
+cfbEncryptOfIO cipher iv bs = withDestIV cipher iv bs $ cfbEncryptMutable cipher
+
+-- | decrypt using the CFB mode.
+--
+-- input need to be a multiple of the blocksize
+cfbDecryptOfIO :: BlockCipherIO cipher =&gt; cipher -&gt; IV cipher -&gt; ByteString -&gt; ByteString
+cfbDecryptOfIO cipher iv bs = withDestIV cipher iv bs $ cfbDecryptMutable cipher
+
+-- | combine using the CTR mode.
+--
+-- CTR mode produce a stream of randomized data that is combined
+-- (by XOR operation) with the input stream.
+--
+-- encryption and decryption are the same operation.
+--
+-- input can be of any size
+ctrCombineOfIO :: BlockCipherIO cipher =&gt; cipher -&gt; IV cipher -&gt; ByteString -&gt; ByteString
+ctrCombineOfIO cipher iv bs = withDestIVAnySize iv bs $ cfbDecryptMutable cipher
+ 
+-- | encrypt using the XTS mode.
+--
+-- input need to be a multiple of the blocksize
+xtsEncryptOfIO :: BlockCipherIO cipher =&gt; (cipher, cipher) -&gt; IV cipher -&gt; DataUnitOffset -&gt; ByteString -&gt; ByteString
+xtsEncryptOfIO ciphers@(c1,_) iv ofs bs = withDestIV c1 iv bs $ \ivPtr -&gt; xtsEncryptMutable ciphers ivPtr ofs
+
+-- | decrypt using the XTS mode.
+--
+-- input need to be a multiple of the blocksize
+xtsDecryptOfIO :: BlockCipherIO cipher =&gt; (cipher, cipher) -&gt; IV cipher -&gt; DataUnitOffset -&gt; ByteString -&gt; ByteString
+xtsDecryptOfIO ciphers@(c1,_) iv ofs bs = withDestIV c1 iv bs $ \ivPtr -&gt; xtsDecryptMutable ciphers ivPtr ofs
+
+-- | Encrypt using CFB mode in 8 bit output
+--
+-- Effectively turn a Block cipher in CFB mode into a Stream cipher
+cfb8EncryptOfIO :: BlockCipherIO a =&gt; a -&gt; IV a -&gt; B.ByteString -&gt; B.ByteString
+cfb8EncryptOfIO ctx origIv msg = B.unsafeCreate (B.length msg) $ \dst -&gt; loop dst origIv msg
+  where loop d iv@(IV i) m
+            | B.null m  = return ()
+            | otherwise = poke d out &gt;&gt; loop (d `plusPtr` 1) ni (B.drop 1 m)
+          where m'  = if B.length m &lt; blockSize ctx
+                            then m `B.append` B.replicate (blockSize ctx - B.length m) 0
+                            else B.take (blockSize ctx) m
+                r   = cfbEncryptOfIO ctx iv m'
+                out = B.head r
+                ni  = IV (B.drop 1 i `B.snoc` out)
+
+-- | Decrypt using CFB mode in 8 bit output
+--
+-- Effectively turn a Block cipher in CFB mode into a Stream cipher
+cfb8DecryptOfIO :: BlockCipherIO a =&gt; a -&gt; IV a -&gt; B.ByteString -&gt; B.ByteString
+cfb8DecryptOfIO ctx origIv msg = B.unsafeCreate (B.length msg) $ \dst -&gt; loop dst origIv msg
+  where loop d iv@(IV i) m
+            | B.null m  = return ()
+            | otherwise = poke d out &gt;&gt; loop (d `plusPtr` 1) ni (B.drop 1 m)
+          where m'  = if B.length m &lt; blockSize ctx
+                            then m `B.append` B.replicate (blockSize ctx - B.length m) 0
+                            else B.take (blockSize ctx) m
+                r   = cfbDecryptOfIO ctx iv m'
+                out = B.head r
+                ni  = IV (B.drop 1 i `B.snoc` B.head m')
+-}</span><span>
+</span><a name="line-184"></a></pre></body></html>
