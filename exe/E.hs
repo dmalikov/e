@@ -5,6 +5,7 @@
 import           Control.E.Keys
 import           Crypto.Random.DRBG
 import qualified Data.ByteString.Encrypt as BSE
+import           Data.Monoid                    ((<>))
 import qualified Data.Text               as T
 import qualified Data.Text.IO            as TIO (putStrLn)
 import           Options.Applicative
