@@ -1,0 +1,5 @@
+:m + Data.Attoparsec.Text
+
+:set -XOverloadedStrings
+:set -XRankNTypes
+:set -XScopedTypeVariables
