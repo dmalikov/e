@@ -1,0 +1,64 @@
+name:                e-aesgcm
+synopsis:            Cipher routine for e.
+description:         This library contains AES-GCM based Cipher / Decipher.
+version:             0.1.0.0
+license:             BSD3
+license-file:        LICENSE
+author:              Dmitry Malikov
+maintainer:          malikov.d.y@gmail.com
+category:            System
+build-type:          Simple
+cabal-version:       >= 1.24
+tested-with:         GHC == 8.2.1
+
+source-repository head
+  type: git
+  location: _
+
+library
+  default-language: Haskell2010
+  build-depends:
+      base < 5
+    , base64-bytestring
+    , bytestring
+    , cipher-aes
+    , crypto-cipher-types
+    , directory
+    , DRBG
+    , e
+    , either
+    , errors
+    , filepath
+    , mmorph
+    , random
+    , RSA
+    , text
+    , transformers
+  exposed-modules: E.Algorithm.AesGcm, Data.ByteString.AesGcm, Codec.Crypto.RSA.AesGcmKeys
+  hs-source-dirs: src
+  ghc-options: -Wall
+
+-- phony exec to reduce dependency duplicates
+-- inspired by https://stackoverflow.com/questions/10163604/how-to-reduce-duplication-in-the-build-depends-fields-of-a-cabal-file
+executable ephony
+  default-language: Haskell2010
+  hs-source-dirs: exe
+  main-is: Main.hs
+  build-depends: base, e-aesgcm
+
+test-suite spec
+  type: exitcode-stdio-1.0
+  Default-Language: Haskell2010
+  Ghc-Options: -Wall
+  Hs-Source-Dirs: test/spec
+  Main-Is: Spec.hs
+  Other-Modules: Data.ByteString.AesGcmSpec
+  Build-Depends:
+      base < 5
+    , e-aesgcm
+    , hspec
+    , RSA
+    , DRBG
+    , bytestring
+    , QuickCheck
+    , quickcheck-instances

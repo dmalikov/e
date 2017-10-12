@@ -1,0 +1,24 @@
+name:                e-exe
+synopsis:            Express sensitive data inside text files in readable and compact way.
+description:         Executable for doing the same as @E@ provides from a cmdline - encrypting and decrypting.
+version:             0.1.0.0
+license:             BSD3
+license-file:        LICENSE
+author:              Dmitry Malikov
+maintainer:          malikov.d.y@gmail.com
+category:            System
+build-type:          Simple
+cabal-version:       >= 1.24
+tested-with:         GHC == 8.2.1
+
+source-repository head
+  type: git
+  location: _
+
+executable e
+  default-language: Haskell2010
+  hs-source-dirs: exe
+  main-is: Main.hs
+  other-modules: Args, Run
+  build-depends: base < 5, e, e-aesgcm, e-gpgme, directory, either
+  ghc-options: -Wall

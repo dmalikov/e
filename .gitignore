@@ -1,5 +1,5 @@
 dist
-test/data/.netrc.decrypted
+dist-newstyle
+.ghc.environment*
 tags
 .stack-work
-*.tix
