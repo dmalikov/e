@@ -1,7 +1,3 @@
-compiler: ghc-8.2.1.20170929
-compiler-check: match-exact
-resolver: nightly-2017-09-13
-
 packages:
   - .
 
@@ -9,15 +5,6 @@ extra-deps: []
 flags: {}
 extra-package-dbs: []
 
-setup-info:
-  ghc:
-    linux64:
-      8.2.1.20170929:
-        url: https://downloads.haskell.org/~ghc/8.2.2-rc1/ghc-8.2.1.20170929-x86_64-deb8-linux.tar.xz
-        content-length: 128418840
-        sha1: cd2905fcf3a1f40023ab956351bd2028464b09d1
-    macosx:
-      8.2.1.20170929:
-        url: https://downloads.haskell.org/~ghc/8.2.2-rc1/ghc-8.2.1.20170929-x86_64-apple-darwin.tar.xz
-        content-length: 115407160
-        sha1: 9ef2b8aeec92152fbd17dfeda877fc921422d099
+compiler: ghc-8.2.1
+compiler-check: match-exact
+resolver: nightly-2017-10-20
