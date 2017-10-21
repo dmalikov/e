@@ -1,0 +1,42 @@
+pecify language: c, so it doesn't default to e.g. ruby
+language: c
+
+dist: trusty
+
+sudo: false
+
+# We remove the index because it churns quite a bit and we don't want
+# to pay the cost of repeatedly caching it even though we don't care
+# about most changing packages.
+before_cache:
+ - rm -fv $HOME/.cabal/packages/hackage.haskell.org/build-reports.log
+ - rm -fv $HOME/.cabal/packages/hackage.haskell.org/00-index*
+ - rm -fv $HOME/.cabal/packages/hackage.haskell.org/01-index*
+ - rm -fv $HOME/.cabal/packages/hackage.haskell.org/*.json
+
+cache:
+  directories:
+  - $HOME/.stack
+
+before_install:
+# Download and unpack the stack executable
+ - mkdir -p ~/.local/bin
+ - export PATH=$HOME/.local/bin:$PATH
+ - travis_retry curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
+
+install:
+ - pushd e
+ - stack --no-terminal setup
+ - stack --no-terminal test --only-dependencies
+ - popd
+ - pushd e-aesgcm
+ - stack --no-terminal test --only-dependencies
+ - popd
+
+script:
+ - pushd e
+ - stack --no-terminal test
+ - popd
+ - pushd e-aesgcm
+ - stack --no-terminal test
+ - popd

@@ -4,7 +4,7 @@ resolver: nightly-2017-09-13
 
 packages:
   - .
-  - ../e-core/
+  - ../e/
   - ../e-aesgcm/
   - ../e-gpgme/
 
