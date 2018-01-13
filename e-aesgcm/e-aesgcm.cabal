@@ -26,7 +26,6 @@ library
     , directory
     , DRBG
     , e
-    , either
     , errors
     , filepath
     , mmorph

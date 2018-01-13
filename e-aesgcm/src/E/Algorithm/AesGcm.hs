@@ -21,10 +21,9 @@ module E.Algorithm.AesGcm (aesgcm) where
 
 import qualified Codec.Crypto.RSA.Pure as RSA
 import Control.Monad.IO.Class
-import Control.Monad.Trans.Either
+import Control.Monad.Trans.Except
 import Crypto.Random.DRBG
 import Data.ByteString.AesGcm
-import Data.Either.Combinators
 import Data.Either.MoreCombinators
 import Data.Text (Text, pack, unpack)
 import Data.Text.Encoding
@@ -52,17 +51,17 @@ decipherAesGcm = Decipher $ \args value -> do
   key <- getPrivateKey =<< unArgValue <$> getKeyId args
   hoistEither $ mapBoth (pack . show) toPlain $ decrypt key value'
 
-getKeyId :: Args -> EitherT Text IO ArgValue
+getKeyId :: Args -> ExceptT Text IO ArgValue
 getKeyId = hoistEither . note "keyId is undefined" . lookupArg "keyId"
 
-getPublicKey :: Text -> EitherT Text IO RSA.PublicKey
+getPublicKey :: Text -> ExceptT Text IO RSA.PublicKey
 getPublicKey (unpack -> keyId) =
-  EitherT (note notfound <$> lookupPublic keyId)
+  ExceptT (note notfound <$> lookupPublic keyId)
  where
   notfound = pack (printf "public key %d not found" keyId)
 
-getPrivateKey :: Text -> EitherT Text IO RSA.PrivateKey
+getPrivateKey :: Text -> ExceptT Text IO RSA.PrivateKey
 getPrivateKey (unpack -> keyId) =
-  EitherT (note notfound <$> lookupPrivate keyId)
+  ExceptT (note notfound <$> lookupPrivate keyId)
  where
   notfound = pack (printf "private key %s not found" keyId)

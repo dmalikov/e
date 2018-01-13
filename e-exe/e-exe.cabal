@@ -20,5 +20,5 @@ executable e
   hs-source-dirs: exe
   main-is: Main.hs
   other-modules: Args, Run
-  build-depends: base < 5, e, e-aesgcm, e-gpgme, directory, either
+  build-depends: base < 5, e, e-aesgcm, e-gpgme, directory
   ghc-options: -Wall

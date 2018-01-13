@@ -3,3 +3,6 @@
 :set -XOverloadedStrings
 :set -XRankNTypes
 :set -XScopedTypeVariables
+
+:set -isrc
+:load E

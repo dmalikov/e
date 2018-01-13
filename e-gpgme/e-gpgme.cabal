@@ -22,7 +22,6 @@ library
     , base64-bytestring
     , bytestring
     , e
-    , either
     , h-gpgme
     , text
   exposed-modules: E.Algorithm.Gpgme

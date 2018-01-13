@@ -1,7 +1,7 @@
 -- | 'E' support for 'IO'
 module E.IO (decIO) where
 
-import Control.Monad.Trans.Either
+import Control.Monad.Trans.Except
 import Control.Exception.Base
 
 import E
@@ -13,7 +13,7 @@ decIO :: Algs     -- ^ Algorithms
       -> FilePath -- ^ Output file.
       -> IO ()
 decIO args f m o = do
-  result <- runEitherT $ runActResult $ act $ ActDec args (InFP f) (InMetaFP m) (OutFP o)
+  result <- runExceptT $ runActResult $ act $ ActDec args (InFP f) (InMetaFP m) (OutFP o)
   case result of
     Left e  -> throw $ userError $ show e
     Right _ -> return ()

@@ -15,10 +15,8 @@ module E.Action
 
 import Control.Monad (unless)
 import Control.Monad.Except
-import Control.Monad.Trans.Either
 import Data.Aeson (eitherDecode)
 import qualified Data.ByteString.Lazy as BSL
-import Data.Either.Combinators
 import Data.Either.MoreCombinators
 import qualified Data.Text.IO as TIO
 import System.Directory (doesFileExist)
@@ -59,7 +57,7 @@ data ActError
     deriving (Eq,Show)
 
 -- | Result of an 'Action'.
-data ActResult a = ActResult { runActResult :: EitherT ActError IO a }
+data ActResult a = ActResult { runActResult :: ExceptT ActError IO a }
 
 instance Functor ActResult where
   fmap f (ActResult v) = ActResult (fmap f v)
@@ -73,11 +71,11 @@ instance Applicative ActResult where
 
 -- | Multiple 'ActResult's could be chained.
 instance Monad ActResult where
-  m >>= f = ActResult . EitherT $ do
-    a <- runEitherT (runActResult m)
+  m >>= f = ActResult . ExceptT $ do
+    a <- runExceptT (runActResult m)
     case a of
       Left l -> pure (Left l)
-      Right r -> runEitherT (runActResult (f r))
+      Right r -> runExceptT (runActResult (f r))
   {-# INLINE (>>=) #-}
   return = pure
   {-# INLINE return #-}
@@ -87,7 +85,7 @@ instance MonadIO ActResult where
 
 -- | Lift a computation from 'IO (Either ActError a)'.
 liftIOEither :: IO (Either ActError a) -> ActResult a
-liftIOEither = ActResult . EitherT
+liftIOEither = ActResult . ExceptT
 
 -- | Signal an exception 'ActError'.
 actError :: ActError -> ActResult a

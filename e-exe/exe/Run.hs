@@ -1,7 +1,6 @@
 {-# LANGUAGE LambdaCase #-}
 module Run where
 
-import Control.Monad.Trans.Either
 import Data.Monoid
 import System.Directory (doesFileExist)
 import System.Exit (die, exitSuccess)
@@ -19,7 +18,7 @@ toMetadata f = "." ++ f ++ ".e"
 
 runAction :: Action -> IO ()
 runAction action = do
-  actionResult <- runEitherT . runActResult $ act action
+  actionResult <- runExceptT . runActResult $ act action
   case actionResult of
     Left actError -> die (describeE actError)
     Right _       -> exitSuccess

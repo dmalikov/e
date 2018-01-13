@@ -97,7 +97,7 @@ module E
   , module E.Describe
   -- * Reexports
   , pack
-  , module Control.Monad.Trans.Either
+  , module Control.Monad.Trans.Except
   ) where
 
 import E.Action
@@ -108,6 +108,6 @@ import E.Template
 import E.Describe
 
 import Data.Text (pack)
-import Control.Monad.Trans.Either
+import Control.Monad.Trans.Except
 
 {-# ANN module ("HLint: ignore Use import/export shortcut" :: String) #-}

@@ -89,7 +89,7 @@ ghci> Just tem = decode @Tem plain
 ghci> tem
 "password = " `Txt` (PlainValue (ValName {unValueName = "password"}) (AlgName {unAlgName = "gpgme"}) (Args {unArgs = fromList [(ArgName {unArgName = "keyId"},ArgValue {unArgValue = "8FCB631E"})]}) (PlainContent {unPlainContent = "qwerty123!"}) `Val` Nil)
 
-ghci> Right (tem', meta) <- runEitherT $ encryptTem gpgme mempty tem
+ghci> Right (tem', meta) <- runExceptT $ encryptTem gpgme mempty tem
 
 ghci> meta
 Metadata {unMetadata = fromList [(ValName {unValueName = "password"},EncValue (AlgName {unAlgName = "gpgme"}) (Args {unArgs = fromList [(ArgName {unArgName = "keyId"},ArgValue {unArgValue = "8FCB631E"})]}) (EncContent {unEncContent = "hQIMA3lu0PjDFmd8AQ//Q/1zSmyYch297WLFFjkXCCD4cN0O3ydN+UmEBE+J+8pHFirH3d/GOb8o1d/W1zuvL+7VCjm1S2VbreXr66OSj6Ox+0sVmW1IKN3wJLfpSXKVxXq8zcWrHIU+HCI6CsCc/7bEgnlEs8Cgf5rUwHr+3kaXuvIpvNM6bbhAHWDsoQo+NnzmeER6geK+SwjHO+hFC3QuI+18uDDGxeayn4+QRfKFkDfbNlaTdh6WhL7ltMXXY+WYpz5fV9jrbH+ZBf1XBhrJNmonGC32Cq7RnFLBqkUmEaUIanCHHoCwh9nE8IONY1YOqv/KdS9hNie3NdArtSS/cGI6HGjda5J+c+mKAyxMdvnTXXDmTrArTeveifRB9+wqMUct1d9WfIsZ1lgly0/uJHhPWsiNNHQ+6BVW90qOIVZfxcjjw0aBrG1QNng9xAJjwEVs+UJ8CoIDJ8XPuhHF5VLz4Qg7odpQpueAOhgtFaGyKaxxMzC49huMNrOx1tpcDpdhef93QOz2JnY/jfQIeq+kiaZF1SxjMoKZMXD1Xd0Yd73d3feqCE3FOrWVHm7NrU16ADk4Xa7m/kYzygaBo4Q+nDa2UFo1ExyD0Uqt8ZqjjoHpk+v9GWjISvPgGjVaHaS961OWR9HC1cu6S2L8tjwjrwOaHlI+fDTpgmfInHK/DaTZHCxN0IuYHdPSRQFKUKafXUo9Q+McvgJIo9RdMb6JAbPoLdep5Rda+WZTeser+MhkN77mcJ+ChrZSaWz2p9oH5QQwy/MO+UDTxgjsNfIFXw=="}))]}
@@ -100,7 +100,7 @@ ghci> tem'
 ghci> encode tem'
 "password = {{E|password}}"
 
-ghci> Right tem'' <- runEitherT $ decryptTem gpgme meta tem'
+ghci> Right tem'' <- runExceptT $ decryptTem gpgme meta tem'
 
 ghci> tem''
 "password = " `Txt` ("qwerty123!" `Txt` Nil)
@@ -160,8 +160,8 @@ password = qwerty123!
 Let's take a look at `encryptTem` and `decryptTem`:
 
 ```
-encryptTem :: Algs -> Metadata -> Tem -> EitherT EError IO (Tem, Metadata)
-decryptTem :: Algs -> Metadata -> Tem -> EitherT EError IO Tem
+encryptTem :: Algs -> Metadata -> Tem -> ExceptT EError IO (Tem, Metadata)
+decryptTem :: Algs -> Metadata -> Tem -> ExceptT EError IO Tem
 ```
 
 In order to encrypt/decrypt template with custom `Algs` you need to define one and just pass there.
