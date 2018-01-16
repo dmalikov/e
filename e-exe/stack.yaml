@@ -9,5 +9,7 @@ extra-deps:
   - bindings-gpgme-0.1.7
 flags: {}
 extra-package-dbs: []
+ghc-options:
+  "$locals": -fhide-source-paths
 
 resolver: lts-10.0
