@@ -21,24 +21,8 @@ before_install:
  - brew install gpgme stack xz
 
 install:
- - pushd e
  - stack --no-terminal setup
  - stack --no-terminal test --only-dependencies
- - popd
- - pushd e-aesgcm
- - stack --no-terminal test --only-dependencies
- - popd
 
 script:
- - pushd e
  - stack --no-terminal test
- - popd
- - pushd e-aesgcm
- - stack --no-terminal test
- - popd
- - pushd e-gpgme
- - stack --no-terminal build
- - popd
- - pushd e-exe
- - stack --no-terminal build
- - popd
