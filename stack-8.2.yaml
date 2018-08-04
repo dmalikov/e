@@ -1,4 +1,4 @@
-resolver: lts-12.4
+resolver: lts-11.19
 packages:
   - './e-aesgcm'
   - './e-exe'
